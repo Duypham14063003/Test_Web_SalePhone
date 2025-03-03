@@ -21,7 +21,7 @@
 ### 1️⃣ Clone dự án từ GitHub
 
 ```sh
-git clone https://github.com/your-repo/test-automation.git
+git clone https://github.com/Duypham14063003/Test_Web_SalePhone
 cd test-salephone
 ```
 
