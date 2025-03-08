@@ -1,10 +1,12 @@
 using NUnit.Framework;
+using OpenQA.Selenium;
 using test_salephone.Helpers;
 
 namespace test_salephone.Tests
 {
     public class UnitTest1
     {
+        private IWebDriver driver;
         [SetUp]
         public void Setup()
         {
