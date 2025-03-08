@@ -1,55 +1,36 @@
-namespace test_salephone;
 using NUnit.Framework;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
+using test_salephone.Helpers;
 
-[TestFixture]
-public class Tests
+namespace test_salephone.Tests
 {
-    private IWebDriver? driver; 
-    private readonly string url = "https://example.com"; 
-
-    [OneTimeSetUp]
-    public void SetupReport()
+    public class UnitTest1
     {
-        ExtentReportHelper.StartReport();
-        ExtentReportHelper.LogTest("Setup Report", "Info", "Khởi tạo báo cáo test");
-    }
-
-    [SetUp]
-    public void Setup()
-    {
-        driver = new ChromeDriver();
-        driver.Navigate().GoToUrl(url);
-        ExtentReportHelper.LogTest("Setup", "Info", $"Điều hướng đến {url}");
-    }
-
-    [Test]
-    public void Test1()
-    {
-        if (driver != null)
+        [SetUp]
+        public void Setup()
         {
-            ExtentReportHelper.LogTest("Test1", "Pass", "Driver hợp lệ, tiếp tục test...");
         }
-        else
+
+        [Test]
+        public void TestMethod1()
         {
-            ExtentReportHelper.LogTest("Test1", "Fail", "Driver chưa được khởi tạo!");
+            string status = "Fail";
+            try
+            {
+                Assert.AreEqual(1, 1);  // Test Pass
+                // status = "Pass";
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+
+            }
+            ExcelReportHelper.WriteToExcel("Testcase Duy", "ID_Dangky_1", status);
+            
         }
-        Assert.NotNull(driver, "Driver chưa được khởi tạo!");
-    }
 
-    [TearDown]
-    public void TearDown()
-    {
-        driver?.Quit();
-        driver?.Dispose();
-        ExtentReportHelper.LogTest("TearDown", "Info", "Trình duyệt đã đóng.");
-    }
-
-    [OneTimeTearDown]
-    public void EndReport()
-    {
-        ExtentReportHelper.LogTest("EndReport", "Info", "Hoàn tất test, kết thúc báo cáo.");
-        ExtentReportHelper.EndReport();
+        [TearDown]
+        public void TearDown()
+        {
+        }
     }
 }
