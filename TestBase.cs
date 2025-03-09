@@ -8,7 +8,7 @@ public class TestBase
     protected IWebDriver driver;
 
     [SetUp]
-    public void Setup()
+    public virtual void Setup()
     {
         driver = new ChromeDriver();
         driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/");
