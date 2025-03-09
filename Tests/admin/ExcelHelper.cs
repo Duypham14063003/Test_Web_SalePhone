@@ -18,11 +18,11 @@ namespace test_salephone.Helpers
         /// <param name="numberTest">Giá trị ở cột 2 để tìm row</param>
         /// <param name="status">Giá trị ghi vào cột 10</param>
         /// <returns>Dữ liệu test đã được parse (các giá trị, mỗi giá trị nằm trên 1 dòng)</returns>
-        public static string ReadDataToExcel(string Worksheets, string numberTest, string status)
+        public static string ReadDataToExcel(string Worksheets, string numberTest)
         {
             using (var workbook = new XLWorkbook(filePath))
             {
-                Console.WriteLine($"📂 Đường dẫn file: {filePath}");
+                Console.WriteLine($"PHUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
 
                 var worksheet = workbook.Worksheet(Worksheets);
                 Console.WriteLine($"▶ Sheet hiện tại: {worksheet.Name}");
@@ -36,20 +36,12 @@ namespace test_salephone.Helpers
                 {
                     // Lấy dữ liệu test từ cột 7
                     string dataTest = row.Cell(7).GetValue<string>().Trim();
-                    
+
                     // Parse dữ liệu test để chỉ lấy giá trị sau dấu ':' trên mỗi dòng
                     string parsedData = ParseTestDataValues(dataTest);
 
                     Console.WriteLine("✅ Parsed Data test ở cột 7: \n" + parsedData);
-
-                    // Ghi status vào cột 10
-                    int rowIndex = row.RowNumber();
-                    worksheet.Cell(rowIndex, 10).Value = status;
-                    Console.WriteLine($"✅ Đã cập nhật trạng thái cho Test Case {numberTest}: {status}");
-
-                    // Lưu file Excel
-                    workbook.SaveAs(filePath);
-                    Console.WriteLine("✅ Đã lưu file Excel");
+                    Console.WriteLine($"PHUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
 
                     // Trả về data test đã được parse
                     return parsedData;

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
 using System;
 using System.Threading;
 using test_salephone.Helpers;
@@ -35,63 +36,85 @@ namespace test_salephone.Tests
             //vào trang quản lý tài khoản
             Thread.Sleep(3000);
             driver.FindElement(By.XPath("//img[@alt='avatar']")).Click(); ;
-            Thread.Sleep(3000);
+            Thread.Sleep(500);
             driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click(); ;
             Thread.Sleep(2000);
             IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Người dùng')]"));
             sanPhamMenu.Click();
             Thread.Sleep(4000);
         }
-        [Test]
-        public void Test_CapNhatTaiKhoan()
+        public void Test_CapNhatTaiKhoan(String testCaseID, String thongBao)
         {
-            string status = "Pass";
+            string status = "Fail";
             try
             {
-                 // Đọc data test từ Excel
-                string dataTest = ExcelHelper.ReadDataToExcel("TestCase Hoàng Phúc", "ID_TaiKhoan_11", status);
+                // Đọc data test từ Excel
+                string dataTest = ExcelHelper.ReadDataToExcel($"TestCase Hoàng Phúc", testCaseID);
                 string[] testFields = dataTest.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                Console.WriteLine("✅ Parsed Data: ");
-                foreach (var field in testFields)
-                {
-                    Console.WriteLine(field);
-                }
-                // Vào trang quản lý tài khoản (nếu cần)
-                VaoTrangQuanLyTaiKhoan();
+                // Console.WriteLine("✅ Parsed Data: ");
+                // foreach (var field in testFields)
+                // {
+                //     Console.WriteLine(field);
+                // }
 
-                // Click vào nút cập nhật (ví dụ đã có sẵn bước này)
                 driver.FindElement(By.XPath($"//tr[td[contains(normalize-space(.), '{testFields[1]}')]]//span[@aria-label='edit']")).Click();
                 Thread.Sleep(2000);
 
                 // Gán dữ liệu cho các trường trên form
-                driver.FindElement(By.Id("fullName")).Clear();
-                driver.FindElement(By.Id("fullName")).SendKeys(testFields[0]);
 
-                driver.FindElement(By.Id("email")).Clear();
-                driver.FindElement(By.Id("email")).SendKeys(testFields[1]);
+                // Nhập "Họ và tên"
+                var fullNameInput = driver.FindElement(By.Id("basic_name"));
+                Thread.Sleep(500);
+                fullNameInput.SendKeys(Keys.Control + "a" + Keys.Delete);
+                Thread.Sleep(500);
+                fullNameInput.SendKeys(testFields[0]);
 
-                driver.FindElement(By.Id("phone")).Clear();
-                driver.FindElement(By.Id("phone")).SendKeys(testFields[2]);
+                // Nhập "Email"
+                var emailInput = driver.FindElement(By.Id("basic_email"));
+                Thread.Sleep(500);
+                emailInput.SendKeys(Keys.Control + "a" + Keys.Delete);
+                Thread.Sleep(500);
+                emailInput.SendKeys(testFields[1]);
 
-                driver.FindElement(By.Id("address")).Clear();
-                driver.FindElement(By.Id("address")).SendKeys(testFields[3]);
+                // Nhập "Số điện thoại"
+                var phoneInput = driver.FindElement(By.Id("basic_phone"));
+                Thread.Sleep(500);
+                phoneInput.SendKeys(Keys.Control + "a" + Keys.Delete);
+                Thread.Sleep(500);
+                phoneInput.SendKeys(testFields[2]);
 
-                driver.FindElement(By.Id("role")).Clear();
-                driver.FindElement(By.Id("role")).SendKeys(testFields[4]);
+                // Nhập "Địa chỉ"
+                var addressInput = driver.FindElement(By.Id("basic_address"));
+                Thread.Sleep(500);
+                addressInput.SendKeys(Keys.Control + "a" + Keys.Delete);
+                Thread.Sleep(500);
+                addressInput.SendKeys(testFields[3]);
 
-                // Giả sử có checkbox cho IsAdmin
-                bool isAdmin = testFields[5].ToLower() == "true";
-                var isAdminCheckbox = driver.FindElement(By.Id("isAdmin"));
-                if (isAdmin && !isAdminCheckbox.Selected)
+                // Nhập "Vai trò"
+                var roleInput = driver.FindElement(By.Id("basic_role"));
+                Thread.Sleep(500);
+                roleInput.SendKeys(Keys.Control + "a" + Keys.Delete);
+                Thread.Sleep(500);
+                roleInput.SendKeys(testFields[4]);
+
+                // Nhập "IsAdmin"
+                var isAdminInput = driver.FindElement(By.Id("basic_isAdmin"));
+                Thread.Sleep(500);
+                isAdminInput.SendKeys(Keys.Control + "a" + Keys.Delete);
+                Thread.Sleep(500);
+                isAdminInput.SendKeys(testFields[5]);
+
+                // Click nút submit
+                driver.FindElement(By.XPath("//button[@type='submit']")).Click();
+                //chờ hiện thông báo cập nhật thành công
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+                IWebElement element = wait.Until(driver =>
                 {
-                    isAdminCheckbox.Click();
-                }
-                else if (!isAdmin && isAdminCheckbox.Selected)
-                {
-                    isAdminCheckbox.Click();
-                }
-
-                Thread.Sleep(2000); // Đợi thao tác xong, sau đó có thể xác nhận kết quả cập nhật
+                    var elements = driver.FindElements(By.XPath($"//span[contains(text(), '{thongBao}')]"));
+                    return elements.Count > 0 && elements[0].Displayed ? elements[0] : null;
+                });
+                status = "Pass";
+                driver.FindElement(By.XPath($"//td[normalize-space()='8462344']")).Click();
 
             }
             catch (Exception ex)
@@ -100,9 +123,16 @@ namespace test_salephone.Tests
                 status = "Fail";
             }
             //Ghi trạng thái test ra Excel nếu cần
-            // ExcelReportHelper.WriteToExcel("TestCase Hoàng Phúc", "ID_TaiKhoan_11", status);
+            ExcelReportHelper.WriteToExcel("TestCase Hoàng Phúc", "ID_TaiKhoan_11", status);
         }
+        [Test]
+        public void Test_CapNhatTaiKhoan_TungTruongHop()
+        {
+            VaoTrangQuanLyTaiKhoan();
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_11", "Cập nhật thành công");
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_12", "Tên không được vượt quá 25 ký tự.");
 
+        }
         [TearDown]
         public void TearDown()
         {
