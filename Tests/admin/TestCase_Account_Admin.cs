@@ -1,6 +1,8 @@
+using DocumentFormat.OpenXml.Math;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.DevTools.V131.Debugger;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Threading;
@@ -49,7 +51,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc data test từ Excel
-                string dataTest = ExcelHelper.ReadDataToExcel($"TestCase Hoàng Phúc", testCaseID);
+                string dataTest = ReadTestDataToExcel.ReadDataToExcel($"TestCase Hoàng Phúc", testCaseID);
                 string[] testFields = dataTest.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
                 // Console.WriteLine("✅ Parsed Data: ");
                 // foreach (var field in testFields)
@@ -107,30 +109,74 @@ namespace test_salephone.Tests
                 // Click nút submit
                 driver.FindElement(By.XPath("//button[@type='submit']")).Click();
                 //chờ hiện thông báo cập nhật thành công
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-                IWebElement element = wait.Until(driver =>
+                WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+                IWebElement element = waitMessage.Until(driver =>
                 {
-                    var elements = driver.FindElements(By.XPath($"//span[contains(text(), '{thongBao}')]"));
-                    return elements.Count > 0 && elements[0].Displayed ? elements[0] : null;
+                    try
+                    {
+                        var elements = driver.FindElements(By.XPath($"//span[contains(text(), '{thongBao}')]"));
+                        return elements.Count > 0 && elements[0].Displayed ? elements[0] : null;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Phát hiện lỗi popup: {ex.Message}");
+                        return null;
+                    }
                 });
                 status = "Pass";
-                driver.FindElement(By.XPath($"//td[normalize-space()='8462344']")).Click();
 
+            }
+            catch (TimeoutException ex)
+            {
+                Console.WriteLine($"⚠️ Phát hiện lỗi timeout: {ex.Message}");
+                status = "Fail";
+            }
+            catch (WebDriverTimeoutException ex)
+            {
+                Console.WriteLine($"⚠️ Phát hiện lỗi timeout: {ex.Message}");
+                status = "Fail";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+                Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
                 status = "Fail";
             }
             //Ghi trạng thái test ra Excel nếu cần
-            ExcelReportHelper.WriteToExcel("TestCase Hoàng Phúc", "ID_TaiKhoan_11", status);
+            ExcelReportHelper.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
         }
         [Test]
         public void Test_CapNhatTaiKhoan_TungTruongHop()
         {
             VaoTrangQuanLyTaiKhoan();
             Test_CapNhatTaiKhoan("ID_TaiKhoan_11", "Cập nhật thành công");
+            Thread.Sleep(2000);
             Test_CapNhatTaiKhoan("ID_TaiKhoan_12", "Tên không được vượt quá 25 ký tự.");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_13", "Cập nhật thành công");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_14", "Số điện thoại phải là số");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_15", "Số điện thoại phải có từ 7 đến 20 số");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_16", "Số điện thoại phải có từ 7 đến 20 số");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_17", "Cập nhật thành công");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_18", "Cập nhật thành công");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_19", "Địa chỉ quá dài, tối đa 100 ký tự");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_20", "Cập nhật thành công");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_21", "Ảnh đại diện không phù hợp, ảnh phải là một định dạng đuôi .png, .jpg,...");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_22", "Vai trò quá dài.");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_23", "Cập nhật thành công");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_24", "Cập nhật thành công");
+            Thread.Sleep(2000);
+            Test_CapNhatTaiKhoan("ID_TaiKhoan_25", "isAdmin phải là true hoặc false");
 
         }
         [TearDown]

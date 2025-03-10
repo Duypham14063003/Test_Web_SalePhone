@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace test_salephone.Helpers
 {
-    public static class ExcelHelper
+    public static class ReadTestDataToExcel
     {
         private static string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx");
 
@@ -22,7 +22,7 @@ namespace test_salephone.Helpers
         {
             using (var workbook = new XLWorkbook(filePath))
             {
-                Console.WriteLine($"PHUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+                Console.WriteLine($"***************************ReadDataToExcel - {numberTest}***************************");
 
                 var worksheet = workbook.Worksheet(Worksheets);
                 Console.WriteLine($"▶ Sheet hiện tại: {worksheet.Name}");
@@ -40,9 +40,7 @@ namespace test_salephone.Helpers
                     // Parse dữ liệu test để chỉ lấy giá trị sau dấu ':' trên mỗi dòng
                     string parsedData = ParseTestDataValues(dataTest);
 
-                    Console.WriteLine("✅ Parsed Data test ở cột 7: \n" + parsedData);
-                    Console.WriteLine($"PHUCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-
+                    Console.WriteLine($"✅ Parsed Data test của {numberTest} ở cột 7: \n" + parsedData);
                     // Trả về data test đã được parse
                     return parsedData;
                 }
