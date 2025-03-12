@@ -1,43 +1,67 @@
-using NUnit.Framework;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using System.Threading;
-using test_salephone.Helpers;
+﻿//using NUnit.Framework;
+//using OpenQA.Selenium;
+//using OpenQA.Selenium.Chrome;
+//using System;
+//using System.Collections.Generic;
+//using ClosedXML.Excel;
+//using System.IO;
+//using OpenQA.Selenium.Support.UI;
+//using SeleniumExtras.WaitHelpers;
 
-namespace test_salephone.Tests
-{
-    [TestFixture]
-    public class ProductDetailTest
-    {
-        private IWebDriver driver;
+//[TestFixture]
+//public class EditUserTest
+//{
+//    private IWebDriver driver;
+//    private ExcelHelper excelHelper;
+//    private string excelPath = @"D:\Book1.xlsx"; // Đường dẫn file Excel
 
-        [SetUp]
-        public void SetUp()
-        {
-            driver = new ChromeDriver();
-            driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/");
-            driver.Manage().Window.Maximize();
-        }
+//    [SetUp]
+//    public void Setup()
+//    {
+//        driver = new ChromeDriver();
+//        driver.Manage().Window.Maximize();
+//        excelHelper = new ExcelHelper(excelPath);
+//    }
 
-        
+//    [Test]
+//    public void ChinhSuaThongTinNguoiDung()
+//    {
+//        string testCaseID = "ID_ChinhSuaTTND_1";
+//        string testData = excelHelper.ReadTestDataByID(testCaseID);
 
-        [Test]
-        public void Test_XemChiTietSanPham()
-        {
-            IWebElement firstProduct = driver.FindElement(By.XPath("//div[@class='product-item'][1]"));
-            firstProduct.Click();
-            Thread.Sleep(2000);
+//        if (string.IsNullOrEmpty(testData))
+//        {
+//            Assert.Fail($"⚠️ Không tìm thấy Test Data cho {testCaseID}");
+//        }
 
-            string productName = driver.FindElement(By.XPath("//h1[@class='product-title']")).Text;
-            Assert.That(productName.Contains("iPhone 15"));
-        }
-        [TearDown]
-        public void TearDown()
-        {
-            driver.Quit();
-            driver.Dispose();
-            driver = null;
+//        // Nhập tên mới từ Test Data
+//        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+//        var nameField = driver.FindElement(By.CssSelector("input[id='name']"));
+//        nameField.Clear();
+//        nameField.SendKeys(testData);
 
-        }
-    }
-}
+//        // Click nút "Cập nhật"
+//        var updateButton = driver.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div/div/div[5]/button"));
+//        updateButton.Click();
+
+//        // Kiểm tra kết quả
+//        string actualName = driver.FindElement(By.Id("name")).GetAttribute("value");
+
+//        if (actualName.Trim().Equals(testData, StringComparison.OrdinalIgnoreCase))
+//        {
+//            excelHelper.WriteResult(testCaseID, "Pass");
+//        }
+//        else
+//        {
+//            excelHelper.WriteResult(testCaseID, "Fail");
+//        }
+
+//        Assert.That(actualName.Trim(), Is.EqualTo(testData).IgnoreCase, "Tên không được cập nhật!");
+//    }
+
+//    [TearDown]
+//    public void TearDown()
+//    {
+//        driver.Quit();
+//    }
+//}

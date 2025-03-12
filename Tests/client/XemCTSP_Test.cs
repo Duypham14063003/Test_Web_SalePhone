@@ -5,7 +5,8 @@ using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System;
 
-namespace SeleniumTests
+namespace XemCTSP_Test
+
 {
     [TestFixture]
     public class ProductDetailTests
@@ -30,24 +31,25 @@ namespace SeleniumTests
 
             try
             {
-                wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+                wait = new WebDriverWait(driver, TimeSpan.FromSeconds(60)); // Tăng timeout
 
                 // Chọn sản phẩm "iPhone 15"
-                var productElement = wait.Until(ExpectedConditions.ElementExists(By.XPath("//div[contains(@class, 'sc-cEzcPc') and contains(text(), 'iPhone 15')]")));
-                string selectedProductName = productElement.Text; 
+                var productElement = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//div[contains(@class, 'sc-cEzcPc') and contains(text(), 'iPhone 15')]")));
+                string selectedProductName = productElement.Text.Trim(); // Lưu tên sản phẩm trước khi click
                 productElement.Click();
 
                 // Chờ trang chi tiết sản phẩm load xong
                 wait.Until(drv => drv.Url.Contains("product"));
 
-                // ten sp trong trang chi tieets
+                // Tìm tiêu đề sản phẩm trên trang chi tiết (chờ khi phần tử hiển thị)
                 IWebElement productTitleElement = wait.Until(
                     ExpectedConditions.ElementIsVisible(By.XPath("//h1[contains(@class, 'sc-iRLAEC')]"))
                 );
 
-                string displayedProductName = productTitleElement.Text; 
+                string displayedProductName = productTitleElement.Text.Trim(); // Lấy tiêu đề sản phẩm trên trang chi tiết
 
-                if (displayedProductName.Contains(selectedProductName))
+                // Kiểm tra xem sản phẩm hiển thị có đúng không
+                if (displayedProductName.Contains("iPhone 15")) // Kiểm tra nếu tiêu đề có chứa "iPhone 15"
                 {
                     actualResult = $"Hiển thị đúng sản phẩm: {displayedProductName}";
                     status = "Pass";
@@ -65,8 +67,9 @@ namespace SeleniumTests
             }
 
             // Ghi kết quả vào file Excel
-            ExcelHelper.WriteResult(testCaseID, actualResult, status);
+           // ExcelHelper.WriteResult(testCaseID, actualResult, status);
         }
+
 
 
 

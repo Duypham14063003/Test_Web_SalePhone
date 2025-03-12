@@ -1,45 +1,53 @@
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
+﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
 using System;
 
-namespace test_salephone.PageObjects
+namespace TestProject.PageObjects
 {
     public class LoginPage
     {
         private readonly IWebDriver driver;
-        private readonly By usernameField = By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[2]/div/div/div[1]/input"); 
-        private readonly By passwordField = By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[2]/div/div/div[2]/span/input");
-        private readonly By loginButton = By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[2]/div/div/div[3]/div/div/button");
-        // private readonly By errorMessage = By.ClassName("error-message");
+        private readonly WebDriverWait wait;
+
+        private readonly By usernameField = By.CssSelector("input[placeholder='Email']");
+        private readonly By passwordField = By.CssSelector("input[placeholder='Nhập mật khẩu']");
+        private readonly By loginButton = By.XPath("//div[@class='ant-spin-container']//button//span[text()='Đăng nhập']");
 
         public LoginPage(IWebDriver driver)
         {
             this.driver = driver;
+            wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
         }
 
         public void EnterUsername(string username)
         {
-            driver.FindElement(usernameField).SendKeys(username);
+            wait.Until(ExpectedConditions.ElementIsVisible(usernameField)).SendKeys(username);
         }
 
         public void EnterPassword(string password)
         {
-            driver.FindElement(passwordField).SendKeys(password);
+            wait.Until(ExpectedConditions.ElementIsVisible(passwordField)).SendKeys(password);
         }
 
         public void ClickLoginButton()
         {
-            driver.FindElement(loginButton).Click();
+            Console.WriteLine("🖱️ Đang click vào nút đăng nhập...");
+            var button = wait.Until(ExpectedConditions.ElementIsVisible(loginButton));
+            wait.Until(ExpectedConditions.ElementToBeClickable(loginButton)).Click();
+            Console.WriteLine("✅ Đã click vào nút đăng nhập.");
+
+            // Kiểm tra URL sau khi đăng nhập
+            System.Threading.Thread.Sleep(3000); // Chờ 3 giây để trang có thời gian load
+            Console.WriteLine($"🔍 URL sau khi đăng nhập: {driver.Url}");
         }
 
-        // public string GetErrorMessage()
-        // {
-        //     return driver.FindElement(errorMessage).Text;
-        // }
 
         public bool IsLoginSuccessful()
         {
-            return !driver.Url.Contains("login"); 
+            bool isLoggedIn = !driver.Url.Contains("sign-in");
+            Console.WriteLine(isLoggedIn ? "🎉 Đăng nhập thành công!" : "❌ Đăng nhập thất bại.");
+            return isLoggedIn;
         }
     }
 }

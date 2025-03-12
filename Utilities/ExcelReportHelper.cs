@@ -7,37 +7,46 @@ namespace test_salephone.Helpers
 {
     public static class ExcelReportHelper
     {
-        private static string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx");
-        public static void WriteToExcel(string Worksheets, string numberTest ,string status)
+        private static string filePath = "C:\\Users\\ngotr\\Downloads\\BDCLPM.xlsx";
+
+        public static void WriteToExcel(string sheetName, string numberTest, string status)
         {
-            
-            using (var workbook = new XLWorkbook(filePath))
+            if (!File.Exists(filePath))
             {
-                Console.WriteLine($"📂 Đường dẫn file: {filePath}");
+                Console.WriteLine($"❌ Không tìm thấy file: {filePath}");
+                return;
+            }
 
-                var worksheet = workbook.Worksheet(Worksheets);
-                Console.WriteLine($"dang o word: {worksheet}");
-                var row = worksheet.RowsUsed()
-                                .Skip(8) // Skip header
-                                    .FirstOrDefault(r => r.Cell(2).GetValue<string>() == numberTest);
-
-                if (row != null)
+            try
+            {
+                using (var workbook = new XLWorkbook(filePath))
                 {
-                    string productName = row.Cell(2).GetValue<string>();
-                    Console.WriteLine($"✅ Tên sản phẩm có ID {numberTest}: {productName}");
+                    var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == sheetName);
+                    if (worksheet == null)
+                    {
+                        Console.WriteLine($"❌ Sheet '{sheetName}' không tồn tại.");
+                        return;
+                    }
 
-                    int rowIndex = row.RowNumber();
-                    worksheet.Cell(rowIndex, 10).Value = status;
-                    Console.WriteLine($"✅ Đã cập nhật trạng thái cho Test Case {numberTest}: {status}");
+                    var row = worksheet.RowsUsed().Skip(8)
+                                       .FirstOrDefault(r => r.Cell(1).GetValue<string>().Trim() == numberTest.Trim());
 
-                    workbook.SaveAs(filePath);
-                    Console.WriteLine($"✅ Đã lưu file Excel");
+                    if (row != null)
+                    {
+                        row.Cell(9).Value = status;
+                        workbook.SaveAs(filePath);
+                        Console.WriteLine($"✅ Đã cập nhật trạng thái cho Test Case {numberTest}: {status}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Không tìm thấy Test Case có ID '{numberTest}' trong sheet '{sheetName}'.");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine($"❌ Không tìm thấy TestCase có ID {numberTest}");
-                }
-            }  
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+            }
         }
     }
 }

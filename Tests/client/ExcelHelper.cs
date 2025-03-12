@@ -1,43 +1,50 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
+using System.Linq;
 using ClosedXML.Excel;
 
-public static class ExcelHelper
+public class ExcelHelper
 {
-    private static string filePath = @"C:\Users\ngotr\Downloads\BDCLPM.xlsx"; 
+    private string filePath;
 
-    public static void WriteResult(string testCaseID, string actualResult, string status)
+    public ExcelHelper(string path)
     {
-        try
+        filePath = path;
+    }
+
+    // Đọc dữ liệu từ sheet Testcase Trân
+    public List<Dictionary<string, string>> ReadExcel()
+    {
+        var testData = new List<Dictionary<string, string>>();
+        using (var workbook = new XLWorkbook(filePath))
         {
-            if (!File.Exists(filePath))
-            {
-                Console.WriteLine("⚠️ File Excel không tồn tại!");
-                return;
-            }
+            var worksheet = workbook.Worksheet("Testcase Trân"); // Đổi tên sheet nếu cần
+            var rows = worksheet.RangeUsed().RowsUsed().Skip(1); // Bỏ dòng tiêu đề
 
-            using (var workbook = new XLWorkbook(filePath))
+            foreach (var row in rows)
             {
-                var worksheet = workbook.Worksheet("Testcase Trân"); 
-                var lastRow = worksheet.LastRowUsed().RowNumber();
-
-                for (int row = 2; row <= lastRow; row++)
+                var data = new Dictionary<string, string>
                 {
-                    if (worksheet.Cell(row, 1).GetString() == testCaseID)
-                    {
-                        worksheet.Cell(row, 8).Value = actualResult; 
-                        worksheet.Cell(row, 9).Value = status; 
-                        break;
-                    }
-                }
-
-                workbook.Save();
-                Console.WriteLine($"✅ Kết quả {testCaseID} đã được ghi vào Excel.");
+                    { "Test Data", row.Cell(6).GetString() }, // Lấy cột Test Data
+                    { "Expected Result", row.Cell(7).GetString() } // Lấy cột Expected Result
+                };
+                testData.Add(data);
             }
         }
-        catch (Exception ex)
+        return testData;
+    }
+
+    // Ghi kết quả vào Excel
+    public void WriteResult(int row, string actualResult, string status)
+    {
+        using (var workbook = new XLWorkbook(filePath))
         {
-            Console.WriteLine($"❌ Lỗi ghi file Excel: {ex.Message}");
+            var worksheet = workbook.Worksheet("Testcase Trân");
+            worksheet.Cell(row + 2, 8).Value = actualResult; // Ghi vào cột Actual Result
+            worksheet.Cell(row + 2, 9).Value = status; // Ghi vào cột Status
+            workbook.Save();
         }
     }
 }
