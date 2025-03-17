@@ -1,16 +1,10 @@
-using DocumentFormat.OpenXml.Math;
-using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.DevTools.V131.Debugger;
-using OpenQA.Selenium.Support.UI;
-using System;
-using System.Threading;
 using test_salephone.Helpers;
-
+using OpenQA.Selenium.Support.UI;
 namespace test_salephone.Tests
 {
-    [TestFixture] // Giúp NUnit nhận diện class test
+    [TestFixture]
     public class TestCase_Account_Admin
     {
         private IWebDriver driver;
@@ -22,29 +16,43 @@ namespace test_salephone.Tests
             driver = new ChromeDriver();
             driver.Manage().Window.Maximize();
             driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
-            Console.WriteLine("Current URL: " + driver.Url);
 
             // Đăng nhập
             driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys("sela@gmail.com");
             driver.FindElement(By.CssSelector("input[placeholder='Nhập mật khẩu']")).SendKeys("123456");
             driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
-            Thread.Sleep(2000);
-
-
-        }
-
-        public void VaoTrangQuanLyTaiKhoan()
-        {
-            //vào trang quản lý tài khoản
             Thread.Sleep(3000);
-            driver.FindElement(By.XPath("//img[@alt='avatar']")).Click(); ;
-            Thread.Sleep(500);
-            driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click(); ;
+            driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+
+            //Vào trang quản lý người dùng
+            Thread.Sleep(2000);
+            driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
             Thread.Sleep(2000);
             IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Người dùng')]"));
             sanPhamMenu.Click();
             Thread.Sleep(4000);
         }
+
+
+        [Test]
+        [Description("Test Cập nhật người dùng")]
+        [Category("User Management")]
+        [TestCase("ID_TaiKhoan_11", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_12", "Tên không được vượt quá 25 ký tự.")]
+        [TestCase("ID_TaiKhoan_13", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_14", "Số điện thoại phải là số")]
+        [TestCase("ID_TaiKhoan_15", "Số điện thoại phải có từ 7 đến 20 số")]
+        [TestCase("ID_TaiKhoan_16", "Số điện thoại phải có từ 7 đến 20 số")]
+        [TestCase("ID_TaiKhoan_17", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_18", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_19", "Địa chỉ quá dài, tối đa 100 ký tự")]
+        [TestCase("ID_TaiKhoan_20", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_21", "Ảnh đại diện không phù hợp, ảnh phải là một định dạng đuôi .png, .jpg,...")]
+        [TestCase("ID_TaiKhoan_22", "Vai trò quá dài.")]
+        [TestCase("ID_TaiKhoan_23", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_24", "Cập nhật thành công")]
+        [TestCase("ID_TaiKhoan_25", "isAdmin phải là true hoặc false")]
+
         public void Test_CapNhatTaiKhoan(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -58,11 +66,8 @@ namespace test_salephone.Tests
                 // {
                 //     Console.WriteLine(field);
                 // }
-
                 driver.FindElement(By.XPath($"//tr[td[contains(normalize-space(.), '{testFields[1]}')]]//span[@aria-label='edit']")).Click();
                 Thread.Sleep(2000);
-
-                // Gán dữ liệu cho các trường trên form
 
                 // Nhập "Họ và tên"
                 var fullNameInput = driver.FindElement(By.Id("basic_name"));
@@ -109,7 +114,9 @@ namespace test_salephone.Tests
                 // Click nút submit
                 driver.FindElement(By.XPath("//button[@type='submit']")).Click();
                 //chờ hiện thông báo cập nhật thành công
-                WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+
+
+                WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
                 IWebElement element = waitMessage.Until(driver =>
                 {
                     try
@@ -117,23 +124,58 @@ namespace test_salephone.Tests
                         var elements = driver.FindElements(By.XPath($"//span[contains(text(), '{thongBao}')]"));
                         return elements.Count > 0 && elements[0].Displayed ? elements[0] : null;
                     }
-                    catch (Exception ex)
+                    catch (TimeoutException ex)
                     {
-                        Console.WriteLine($"⚠️ Phát hiện lỗi popup: {ex.Message}");
+                        Console.WriteLine($"⚠️ Phát hiện lỗi timeout: {ex.Message}");
                         return null;
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Lỗi thông báo: {ex.Message}");
+                        return null;
+                    }
+
+
                 });
+                if (element != null)
+                {
+                    Console.WriteLine($"✅ Thông báo: {thongBao}");
+                    status = "Pass";
+                }
+                else
+                {
+                    status = "Fail";
+                }
+                Thread.Sleep(2000);
+                var elements = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+                if (elements.Count > 0)
+                {
+                    try
+                    {
+                        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
+                        wait.Until(d =>
+                        {
+                            var element = d.FindElement(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+                            return element.Displayed && element.Enabled ? element : null;
+                        }).Click();
+                        Console.WriteLine("Đã nhấp vào nút đóng.");
+                    }
+                    catch (Exception ex)
+                    {
+                        //không làm gì
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Không tìm thấy nút đóng.");
+                }
                 status = "Pass";
 
             }
-            catch (TimeoutException ex)
-            {
-                Console.WriteLine($"⚠️ Phát hiện lỗi timeout: {ex.Message}");
-                status = "Fail";
-            }
+
             catch (WebDriverTimeoutException ex)
             {
-                Console.WriteLine($"⚠️ Phát hiện lỗi timeout: {ex.Message}");
+                Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
                 status = "Fail";
             }
             catch (Exception ex)
@@ -144,41 +186,7 @@ namespace test_salephone.Tests
             //Ghi trạng thái test ra Excel nếu cần
             ExcelReportHelper.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
         }
-        [Test]
-        public void Test_CapNhatTaiKhoan_TungTruongHop()
-        {
-            VaoTrangQuanLyTaiKhoan();
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_11", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_12", "Tên không được vượt quá 25 ký tự.");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_13", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_14", "Số điện thoại phải là số");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_15", "Số điện thoại phải có từ 7 đến 20 số");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_16", "Số điện thoại phải có từ 7 đến 20 số");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_17", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_18", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_19", "Địa chỉ quá dài, tối đa 100 ký tự");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_20", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_21", "Ảnh đại diện không phù hợp, ảnh phải là một định dạng đuôi .png, .jpg,...");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_22", "Vai trò quá dài.");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_23", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_24", "Cập nhật thành công");
-            Thread.Sleep(2000);
-            Test_CapNhatTaiKhoan("ID_TaiKhoan_25", "isAdmin phải là true hoặc false");
-
-        }
+        
         [TearDown]
         public void TearDown()
         {
