@@ -3,10 +3,20 @@ using System.IO;
 using ClosedXML.Excel;
 using System.Linq;
 
-namespace test_salephone.Helpers
+namespace test_salephone.Utilities
 {
-    public static class ExcelReportHelper
+
+    // Định nghĩa lớp TestCase chứa các thuộc tính cần thiết
+  
+
+    public class ExcelReportHelper
     {
+        public class TestCase
+        {
+            public string Id { get; set; }
+            public string data { get; set; }
+            // Bạn có thể bổ sung thêm các thuộc tính khác nếu cần
+        }
         private static string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx");
         public static void WriteToExcel(string Worksheets, string numberTest ,string status)
         {
@@ -38,6 +48,46 @@ namespace test_salephone.Helpers
                     Console.WriteLine($"❌ Không tìm thấy TestCase có ID {numberTest}");
                 }
             }  
+        }
+
+         // Hàm đọc dữ liệu từ Excel và trả về danh sách các TestCase
+        public static List<TestCase> GetTestCases(string worksheetName)
+        {
+            var testCases = new List<TestCase>();
+
+            using (var workbook = new XLWorkbook(filePath))
+            {
+                var worksheet = workbook.Worksheet(worksheetName);
+                Console.WriteLine($"📂 Đọc dữ liệu từ sheet: {worksheetName}");
+
+                // Giả sử 8 dòng đầu là header, bỏ qua chúng
+                foreach (var row in worksheet.RowsUsed().Skip(1))
+                {
+                    // Giả sử cột 2 chứa ID và cột 10 chứa trạng thái
+                    string id = row.Cell(1).GetValue<string>();
+                    string data = row.Cell(2).GetValue<string>();
+
+                    var testCase = new TestCase
+                    {
+                        Id = id,
+                        data = data
+                    };
+
+                    testCases.Add(testCase);
+                }
+            }
+
+            return testCases;
+        }
+
+        public static IEnumerable<object[]> GetTestCasesForNUnit()
+        {
+            // Sử dụng tên sheet cố định "testCase_Duy"
+            var testCases = GetTestCases("TestData_TKSP");
+            foreach (var testCase in testCases)
+            {
+                yield return new object[] { testCase.Id, testCase.data };
+            }
         }
     }
 }
