@@ -37,8 +37,7 @@ namespace TestProject.PageObjects
             wait.Until(ExpectedConditions.ElementToBeClickable(loginButton)).Click();
             Console.WriteLine("✅ Đã click vào nút đăng nhập.");
 
-            // Kiểm tra URL sau khi đăng nhập
-            System.Threading.Thread.Sleep(3000); // Chờ 3 giây để trang có thời gian load
+            System.Threading.Thread.Sleep(3000);
             Console.WriteLine($"🔍 URL sau khi đăng nhập: {driver.Url}");
         }
 

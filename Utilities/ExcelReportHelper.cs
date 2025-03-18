@@ -9,7 +9,7 @@ namespace test_salephone.Helpers
     {
         private static string filePath = "C:\\Users\\ngotr\\Downloads\\BDCLPM.xlsx";
 
-        public static void WriteToExcel(string sheetName, string numberTest, string status)
+        public static void WriteToExcel(string sheetName, string numberTest, string status, string actualResult)
         {
             if (!File.Exists(filePath))
             {
@@ -33,9 +33,11 @@ namespace test_salephone.Helpers
 
                     if (row != null)
                     {
-                        row.Cell(9).Value = status;
+                        row.Cell(8).Value = actualResult; // Cập nhật Actual Result vào cột H
+                        row.Cell(9).Value = status;       // Cập nhật Status vào cột I
+
                         workbook.SaveAs(filePath);
-                        Console.WriteLine($"✅ Đã cập nhật trạng thái cho Test Case {numberTest}: {status}");
+                        Console.WriteLine($"✅ Đã cập nhật Test Case {numberTest}:\n   - Status: {status}\n   - Actual Result: {actualResult}");
                     }
                     else
                     {

@@ -13,11 +13,10 @@ namespace test_salephone.PageObjects
         private readonly By IsCartEmpty = By.CssSelector(".sc-bLmarx.kcYPxN");
         private readonly By productInCart = By.CssSelector(".sc-hJRrWL.RErTn");
         private readonly By productCheckbox = By.XPath("//input[@type='checkbox']");
-        // Tìm và click vào nút Mua Hàng đầu tiên
         private readonly By firstBuyButton = By.XPath("(//button[contains(@class, 'ant-btn-primary') and span[text()='Mua Hàng']])[1]");
 
-        // Nút Mua Hàng xuất hiện sau khi click
-        private readonly By lastBuyButton = By.XPath("(//button[contains(@class, 'ant-btn-primary') and span[text()='Mua Hàng']])[last()]"); private readonly By productToSelect = By.XPath("//div[contains(@class, 'sc-cEzcPc') and contains(text(), 'iPhone 15')]");
+        private readonly By lastBuyButton = By.XPath("(//button[contains(@class, 'ant-btn-primary') and span[text()='Mua Hàng']])[last()]");
+        private readonly By productToSelect = By.XPath("//div[contains(@class, 'sc-cEzcPc') and contains(text(), 'iPhone 15')]");
         private readonly By addToCartButton = By.XPath("//button[contains(@class, 'ant-btn-primary') and contains(., 'Thêm vào giỏ hàng')]");
         private readonly By clickaddToCartButton = By.XPath("//button[contains(@class, 'ant-btn-primary')]//span[contains(text(), 'Thêm vào giỏ hàng')]");
         public CheckCart(IWebDriver driver)
@@ -51,7 +50,6 @@ namespace test_salephone.PageObjects
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
-            // Lấy số lượng sản phẩm trước khi mua
             int beforeBuyCount = GetCartItemCount();
             Console.WriteLine($"📦 Trước khi mua: {beforeBuyCount} sản phẩm.");
 
@@ -60,7 +58,6 @@ namespace test_salephone.PageObjects
                 driver.FindElement(firstBuyButton).Click();
                 Console.WriteLine("✅ Đã click vào nút Mua Hàng đầu tiên.");
 
-                // Chờ nút lastBuyButton xuất hiện
                 wait.Until(ExpectedConditions.ElementExists(lastBuyButton));
 
                 if (driver.FindElements(lastBuyButton).Count > 0)
@@ -68,10 +65,8 @@ namespace test_salephone.PageObjects
                     driver.FindElement(lastBuyButton).Click();
                     Console.WriteLine("✅ Đã click vào nút Mua Hàng cuối cùng.");
 
-                    // Chờ giỏ hàng cập nhật
                     Thread.Sleep(3000);
 
-                    // Kiểm tra số lượng sản phẩm sau khi mua
                     int afterBuyCount = GetCartItemCount();
                     Console.WriteLine($"📦 Sau khi mua: {afterBuyCount} sản phẩm.");
 
@@ -96,15 +91,40 @@ namespace test_salephone.PageObjects
         }
 
 
+
+
+        public void ClickLastBuyButtonOnly()
+        {
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            try
+            {
+                if (driver.FindElements(lastBuyButton).Count > 0)
+                {
+                    IWebElement lastBtn = wait.Until(ExpectedConditions.ElementToBeClickable(lastBuyButton));
+                    lastBtn.Click();
+                    Console.WriteLine("✅ Đã click vào nút Mua Hàng cuối cùng.");
+                    Thread.Sleep(3000);
+                }
+                else
+                {
+                    Console.WriteLine("❌ Không tìm thấy nút Mua Hàng cuối cùng.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"❌ Lỗi khi click vào nút Mua Hàng cuối cùng: {e.Message}");
+            }
+        }
+
+
         public int GetCartItemCount()
         {
-            // Mở giỏ hàng trước khi đếm số lượng sản phẩm
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
             IWebElement cartBtn = wait.Until(ExpectedConditions.ElementToBeClickable(cartButton));
             cartBtn.Click();
             Console.WriteLine("🛒 Đã mở giỏ hàng.");
 
-            // Đợi giỏ hàng load xong
             Thread.Sleep(2000);
 
             int productCount = driver.FindElements(productInCart).Count;
@@ -120,14 +140,11 @@ namespace test_salephone.PageObjects
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
             driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/");
 
-            // Chờ sản phẩm có thể được tìm thấy
             IWebElement product = wait.Until(ExpectedConditions.ElementExists(productToSelect));
 
-            // Cuộn đến phần tử
             ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", product);
             Thread.Sleep(1500); // Đợi một chút để đảm bảo phần tử đã cuộn vào tầm nhìn
 
-            // Click vào sản phẩm
             product.Click();
             Thread.Sleep(2500);
 
@@ -150,17 +167,107 @@ namespace test_salephone.PageObjects
 
             Thread.Sleep(1500);
         }
-           public void ClickLogoToGoToHomePage()
+
+
+
+
+        public void FindAndClickProductByName(string productName)
+        {
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            for (int i = 0; i < 5; i++)
             {
-                // Tìm logo bằng cách sử dụng thuộc tính src
-                IWebElement logo = driver.FindElement(By.XPath("//img[@src='/assets/logo-HOh0M7tK.png']"));
-
-                // Nhấn vào logo để quay lại trang chủ
-                logo.Click();
-
-                Thread.Sleep(2000); // Đợi trang được tải lại sau khi quay lại trang chủ
+                ((IJavaScriptExecutor)driver).ExecuteScript("window.scrollBy(0, 500);");
+                Thread.Sleep(1000);
             }
 
+            By productLocator = By.XPath($"//div[contains(@class, 'sc-cEzcPc') and contains(text(), '{productName}')]");
+
+            try
+            {
+                IWebElement product = wait.Until(ExpectedConditions.ElementToBeClickable(productLocator));
+
+                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", product);
+                Thread.Sleep(1000);
+
+
+                product.Click();
+                Console.WriteLine($"✅ Đã click vào sản phẩm: {productName}");
+
+                AddProductToCartAndBuy();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"❌ Không tìm thấy sản phẩm: {productName}");
+            }
         }
-    
+
+
+
+
+        public void AddProductToCartAndBuy()
+        {
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            By addToCartButton = By.XPath("//button[contains(@class, 'ant-btn-primary') and contains(., 'Thêm vào giỏ hàng')]");
+
+            try
+            {
+                IWebElement addToCartBtn = wait.Until(ExpectedConditions.ElementToBeClickable(addToCartButton));
+                addToCartBtn.Click();
+                Console.WriteLine("✅ Đã thêm sản phẩm vào giỏ hàng.");
+                Thread.Sleep(2000);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("❌ Không tìm thấy nút 'Thêm vào giỏ hàng'.");
+                return;
+            }
+
+            OpenCart();
+            Thread.Sleep(2000);
+
+
+            SelectLatestProduct();
+
+            ClickFirstBuyButtonOnly();
+        }
+
+
+        public void ClickFirstBuyButtonOnly()
+        {
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            try
+            {
+                if (driver.FindElements(firstBuyButton).Count > 0)
+                {
+                    IWebElement firstBtn = wait.Until(ExpectedConditions.ElementToBeClickable(firstBuyButton));
+                    firstBtn.Click();
+                    Console.WriteLine("✅ Đã click vào nút Mua Hàng đầu tiên.");
+                    Thread.Sleep(3000);
+                }
+                else
+                {
+                    Console.WriteLine("❌ Không tìm thấy nút Mua Hàng đầu tiên.");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"❌ Lỗi khi click vào nút Mua Hàng đầu tiên: {e.Message}");
+            }
+        }
+
+
+
+        public void ClickLogoToGoToHomePage()
+        {
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            IWebElement logo = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//img[@src='/assets/logo-HOh0M7tK.png']")));
+            logo.Click();
+            wait.Until(ExpectedConditions.UrlToBe("https://frontend-salephones.vercel.app/"));
+        }
+
+    }
 }

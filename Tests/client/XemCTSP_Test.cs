@@ -49,7 +49,7 @@ namespace XemCTSP_Test
                 string displayedProductName = productTitleElement.Text.Trim(); // Lấy tiêu đề sản phẩm trên trang chi tiết
 
                 // Kiểm tra xem sản phẩm hiển thị có đúng không
-                if (displayedProductName.Contains("iPhone 15")) // Kiểm tra nếu tiêu đề có chứa "iPhone 15"
+                if (displayedProductName.Contains("SP Test")) // Kiểm tra nếu tiêu đề có chứa "iPhone 15"
                 {
                     actualResult = $"Hiển thị đúng sản phẩm: {displayedProductName}";
                     status = "Pass";
