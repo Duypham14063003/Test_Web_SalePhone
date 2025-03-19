@@ -138,7 +138,7 @@ namespace MuaHang_Test
             checkCart.FindAndClickProductByName(productName);
             Thread.Sleep(6000);
 
-            // 🔄 Quay lại tab Admin để xóa sản phẩm
+            //Quay lại tab Admin để xóa sản phẩm
             Console.WriteLine("🔄 Quay lại tab Admin để xóa sản phẩm...");
             driver.SwitchTo().Window(tabs[1]);
             Thread.Sleep(3000);
@@ -148,7 +148,7 @@ namespace MuaHang_Test
             Console.WriteLine("✅ Đã xóa sản phẩm thành công!");
             Thread.Sleep(3000);
 
-            // 🔄 Quay lại User và chọn lastBuyButton
+            //Quay lại User và chọn lastBuyButton
             Console.WriteLine("🔄 Quay lại trang User...");
             driver.SwitchTo().Window(tabs[0]);
             Thread.Sleep(3000);
@@ -156,7 +156,7 @@ namespace MuaHang_Test
             Console.WriteLine("🛍️ Click vào nút Mua Hàng cuối cùng...");
             checkCart.ClickLastBuyButtonOnly();
 
-            // ✅ Không kiểm tra thông báo lỗi, chỉ lưu kết quả là PASS
+            //Không kiểm tra thông báo lỗi, chỉ lưu kết quả là PASS
             Console.WriteLine("✅ Ghi kết quả PASS vào Excel.");
             ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_2", "PASS", "Không thể mua hàng do sản phẩm đã bị xóa");
         }
