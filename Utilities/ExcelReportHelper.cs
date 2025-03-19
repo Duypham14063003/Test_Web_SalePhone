@@ -7,7 +7,7 @@ namespace test_salephone.Utilities
 {
 
     // Định nghĩa lớp TestCase chứa các thuộc tính cần thiết
-  
+
 
     public class ExcelReportHelper
     {
@@ -18,7 +18,7 @@ namespace test_salephone.Utilities
             // Bạn có thể bổ sung thêm các thuộc tính khác nếu cần
         }
         private static string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx");
-        public static void WriteToExcel(string Worksheets, string numberTest ,string status)
+        public static void WriteToExcel(string sheetName, string numberTest, string status, string actualResult = "")
         {
             if (!File.Exists(filePath))
             {
@@ -45,14 +45,19 @@ namespace test_salephone.Utilities
                         row.Cell(8).Value = actualResult; // Cập nhật Actual Result vào cột H
                         row.Cell(9).Value = status;       // Cập nhật Status vào cột I
 
-                    workbook.SaveAs(filePath);
-                    Console.WriteLine($"✅ Đã lưu file Excel");
+                        workbook.SaveAs(filePath);
+                        Console.WriteLine($"✅ Đã lưu file Excel");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Không tìm thấy TestCase có ID {numberTest}");
+                    }
                 }
-                else
-                {
-                    Console.WriteLine($"❌ Không tìm thấy TestCase có ID {numberTest}");
-                }
-            }  
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+            }
         }
 
          // Hàm đọc dữ liệu từ Excel và trả về danh sách các TestCase

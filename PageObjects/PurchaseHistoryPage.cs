@@ -4,7 +4,7 @@ using SeleniumExtras.WaitHelpers;
 using System;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
-using test_salephone.Helpers;
+using test_salephone.Utilities;
 
 namespace test_salephone.PageObjects
 {

@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using TestProject.PageObjects;
 using test_salephone.PageObjects;
-using test_salephone.Helpers;
+using test_salephone.Utilities;
 
 namespace MuaHang_Test
 {

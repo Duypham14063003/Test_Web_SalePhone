@@ -7,10 +7,10 @@ using System.Threading;
 using test_salephone.PageObjects;
 using TestProject.PageObjects;
 using NUnit.Framework;
-using test_salephone.Helpers;
 using SeleniumExtras.WaitHelpers;
 using System.Collections.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.Utilities.Helpers;
+using test_salephone.Utilities;
 
 namespace XemLSMH
 {
