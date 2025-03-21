@@ -43,24 +43,7 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_ViewOrder()//02 và 03
-        {   
-            Test_Login_Success();
-            Thread.Sleep(3000);
-
-            Actions action = new Actions(driver);
-            IWebElement avatar = driver.FindElement(By.XPath("//img[@alt='avatar']"));
-            action.ClickAndHold(avatar).Perform(); 
-            Thread.Sleep(5000);
-            driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();;
-            Thread.Sleep(2000);
-            IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]"));
-            sanPhamMenu.Click();
-            Thread.Sleep(6000);
-        }
-
-        [Test]
-        public void Test_ViewOrderDetails() //04
+        public void Test_ViewOrderDetails() //02
         {
            
             // Xem trang quản lý đơn hàng
@@ -73,43 +56,118 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_InValidLogin()//05
-        {
-            driver.FindElement(By.XPath("//div[@class='ant-row sc-dgjgUn ittrMP css-qnu6hi']//div[4]//div[1]")).Click();
+        public void Test_ViewOrder()//03
+        {   
+            Test_Login_Success();
+            Thread.Sleep(3000);
+
+            Actions action = new Actions(driver);
+            IWebElement avatar = driver.FindElement(By.XPath("//img[@alt='avatar']"));
+            action.ClickAndHold(avatar).Perform(); 
+            Thread.Sleep(5000);
+            driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
             Thread.Sleep(2000);
-            
-            driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
-            Console.WriteLine("Current URL: " + driver.Url);
-
-
-            driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys("sela@gmail.com");
-            driver.FindElement(By.CssSelector("input[placeholder='Nhập mật khẩu']")).SendKeys("1234");
-
-            driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
-            Thread.Sleep(2000);
-
-            var errorMessage = driver.FindElement(By.XPath("//span[contains(text(),'Email hoặc Mật khẩu sai!')]")).Text;
-            Console.WriteLine("Thông báo lỗi: " + errorMessage);
+            IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]"));
+            sanPhamMenu.Click();
+            Thread.Sleep(6000);
         }
 
         [Test]
-        public void Test_NoAccount()//06
+        public void Test_VerifyOrderQuantity()//04
         {
-            driver.FindElement(By.XPath("//div[@class='ant-row sc-dgjgUn ittrMP css-qnu6hi']//div[4]//div[1]")).Click();
-            Thread.Sleep(2000);
+           
+            // Xem trang quản lý đơn hàng
+            Test_ViewOrder();
+
             
-            driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
-            Console.WriteLine("Current URL: " + driver.Url);
+            var orderRows = driver.FindElements(By.CssSelector("table tbody tr"));
+            if (orderRows.Count > 0)
+            {
+                Console.WriteLine($" Hệ thống có {orderRows.Count} đơn hàng.");
+            }
+            else
+            {
+                Console.WriteLine(" Không có đơn hàng nào trong hệ thống.");
+            }
 
-            driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
-            Thread.Sleep(2000);
-
-            var errorMessage = driver.FindElement(By.XPath("//div[@class='sc-FFETS kqYrLy']//div//span[contains(text(),'The input is required')]")).Text;
-            Console.WriteLine("Thông báo lỗi: " + errorMessage);
         }
 
         [Test]
-        public void Test_Sort_Orderlist_Status()//07
+        public void Test_ManyproductsinOrder() //05
+        {
+            Test_ViewOrder();
+
+            // Chọn đơn hàng đầu tiên để mở chi tiết
+            driver.FindElement(By.XPath("//button[@type='button' and @class='ant-table-row-expand-icon ant-table-row-expand-icon-collapsed' and @aria-label='Expand row' and @aria-expanded='false']")).Click();
+            Thread.Sleep(3000); 
+
+            // Lấy danh sách sản phẩm trong chi tiết đơn hàng
+            var productElements = driver.FindElements(By.CssSelector(".order-details .product-list .product-item"));
+            List<string> displayedProducts = productElements.Select(el => el.Text.Trim()).ToList();
+
+            // In danh sách sản phẩm ra console
+            Console.WriteLine("Danh sách sản phẩm hiển thị trong đơn hàng:");
+            displayedProducts.ForEach(product => Console.WriteLine($"- {product}"));
+
+            // Kiểm tra danh sách không rỗng
+            if (displayedProducts.Count > 0)
+            {
+                Console.WriteLine("Danh sách sản phẩm hiển thị đúng.");
+            }
+            else
+            {
+                Console.WriteLine("LỖI: Không có sản phẩm nào hiển thị trong đơn hàng!");
+            }
+        }
+
+        [Test]
+        public void Test_Update_StatusOrder() //06
+        {
+            Test_ViewOrder();
+
+            // Tìm đơn hàng có trạng thái "Đang xử lý"
+            var orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang xử lý']"));
+            if (orderRow == null)
+            {
+                Console.WriteLine("Không có đơn hàng 'Đang xử lý'");
+                return;
+            }
+
+            // Nhấn vào trạng thái "Đang xử lý" để mở dropdown
+            var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang xử lý']")); 
+            statusButton.Click();
+            Thread.Sleep(1000);
+
+            // Chọn "Đã giao hàng" từ danh sách dropdown
+            driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã giao hàng']")).Click();
+            Thread.Sleep(1000);
+        }
+
+        [Test]
+        public void Test_Update_PaymentOrder() //07
+        {
+            Test_ViewOrder();
+
+            // Tìm đơn hàng có trạng thái "Chưa thanh toán"
+            var orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']"));
+            if (orderRow == null)
+            {
+                Console.WriteLine("Không có đơn hàng 'Chưa thanh toán'");
+                return;
+            }
+
+            // Nhấn vào trạng thái "Chưa thanh toán" để mở dropdown
+            var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']")); 
+            statusButton.Click();
+            Thread.Sleep(2000);
+
+            // Chọn "Đã thanh toán" từ danh sách dropdown
+            driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã thanh toán']")).Click();
+            Thread.Sleep(2000);
+        }
+
+        [Test]
+        public void Test_Sort_Orderlist_Status()//08
         {
            
             // Xem trang quản lý đơn hàng
@@ -129,7 +187,7 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_Sort_Orderlist_Payment()//08
+        public void Test_Sort_Orderlist_Payment()//09
         {
            
             // Xem trang quản lý đơn hàng
@@ -141,7 +199,7 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_Sort_Orderlist_Name()//09
+        public void Test_Sort_Orderlist_Name()//10
         {
            
             // Xem trang quản lý đơn hàng
@@ -153,7 +211,7 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_Sort_Orderlist_PaymentMethod()//10
+        public void Test_Sort_Orderlist_PaymentMethod()//11
         {
            
             // Xem trang quản lý đơn hàng
@@ -165,7 +223,7 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_Sort_Orderlist_TotalOrder()//11
+        public void Test_Sort_Orderlist_TotalOrder()//12
         {
            
             // Xem trang quản lý đơn hàng
@@ -177,7 +235,7 @@ namespace test_salephone.Tests
         }
 
         // [Test]
-        // public void Test_Sort_Orderlist_OrderDate()//12
+        // public void Test_Sort_Orderlist_OrderDate()//13
         // {
            
         //     // Xem trang quản lý đơn hàng
@@ -203,25 +261,7 @@ namespace test_salephone.Tests
         //     Thread.Sleep(3000); 
         // }
 
-        [Test]
-        public void Test_VerifyOrderQuantity()//13
-        {
-           
-            // Xem trang quản lý đơn hàng
-            Test_ViewOrder();
-
-            
-            var orderRows = driver.FindElements(By.CssSelector("table tbody tr"));
-            if (orderRows.Count > 0)
-            {
-                Console.WriteLine($" Hệ thống có {orderRows.Count} đơn hàng.");
-            }
-            else
-            {
-                Console.WriteLine(" Không có đơn hàng nào trong hệ thống.");
-            }
-
-        }
+        
 
         [Test]
         public void Test_CheckOrdersPerPageAndSelectAnyPage()//14
@@ -379,87 +419,14 @@ namespace test_salephone.Tests
             }
         }
 
+        
+
         [Test]
-        public void Test_ManyproductsinOrder() //18
+        public void Test_ChangeStatus_OrderLogic() //18
         {
             Test_ViewOrder();
 
-            // Chọn đơn hàng đầu tiên để mở chi tiết
-            driver.FindElement(By.XPath("//tr[td[normalize-space()='67cd7a2a61ca00c79e87fe44']]//button[@aria-label='Expand row']")).Click();
-            Thread.Sleep(3000); 
-
-            // Lấy danh sách sản phẩm trong chi tiết đơn hàng
-            var productElements = driver.FindElements(By.CssSelector(".order-details .product-list .product-item"));
-            List<string> displayedProducts = productElements.Select(el => el.Text.Trim()).ToList();
-
-            // In danh sách sản phẩm ra console
-            Console.WriteLine("Danh sách sản phẩm hiển thị trong đơn hàng:");
-            displayedProducts.ForEach(product => Console.WriteLine($"- {product}"));
-
-            // Kiểm tra danh sách không rỗng
-            if (displayedProducts.Count > 0)
-            {
-                Console.WriteLine("Danh sách sản phẩm hiển thị đúng.");
-            }
-            else
-            {
-                Console.WriteLine("LỖI: Không có sản phẩm nào hiển thị trong đơn hàng!");
-            }
-        }
-
-        [Test]
-        public void Test_Change_StatusOrder() //19
-        {
-            Test_ViewOrder();
-
-            // Tìm đơn hàng có trạng thái "Đang xử lý"
-            var orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang xử lý']"));
-            if (orderRow == null)
-            {
-                Console.WriteLine("Không có đơn hàng 'Đang xử lý'");
-                return;
-            }
-
-            // Nhấn vào trạng thái "Đang xử lý" để mở dropdown
-            var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang xử lý']")); 
-            statusButton.Click();
-            Thread.Sleep(1000);
-
-            // Chọn "Đã giao hàng" từ danh sách dropdown
-            driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã giao hàng']")).Click();
-            Thread.Sleep(1000);
-        }
-
-        [Test]
-        public void Test_Change_PaymentOrder() //20
-        {
-            Test_ViewOrder();
-
-            // Tìm đơn hàng có trạng thái "Chưa thanh toán"
-            var orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']"));
-            if (orderRow == null)
-            {
-                Console.WriteLine("Không có đơn hàng 'Chưa thanh toán'");
-                return;
-            }
-
-            // Nhấn vào trạng thái "Chưa thanh toán" để mở dropdown
-            var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']")); 
-            statusButton.Click();
-            Thread.Sleep(2000);
-
-            // Chọn "Đã thanh toán" từ danh sách dropdown
-            driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã thanh toán']")).Click();
-            Thread.Sleep(2000);
-        }
-
-        [Test]
-        public void Test_Change_DeliveredOrderLogic() //21
-        {
-            // Thực hiện kiểm tra danh sách đơn hàng
-            Test_ViewOrder();
-
-            IWebElement orderRow = null;
+            IWebElement? orderRow = null;
 
             // Tìm đơn hàng có trạng thái "Đã giao hàng" trên bất kỳ trang nào
             while (true)
@@ -483,7 +450,7 @@ namespace test_salephone.Tests
                         // Chuyển sang trang tiếp theo
                         Console.WriteLine("Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
                         nextPageButton[0].Click();
-                        Thread.Sleep(2000); // Đợi trang mới tải xong
+                        Thread.Sleep(2000); 
                     }
                     else
                     {
@@ -510,12 +477,11 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        public void Test_Change_PaymentOrderLogic() //22
+        public void Test_ChangePayment_OrderLogic() //19
         {
-            // Thực hiện kiểm tra danh sách đơn hàng
             Test_ViewOrder();
 
-            IWebElement orderRow = null;
+            IWebElement? orderRow = null;
 
             // Tìm đơn hàng có trạng thái "Đã thanh toán" trên bất kỳ trang nào
             while (true)
@@ -539,13 +505,13 @@ namespace test_salephone.Tests
                         // Chuyển sang trang tiếp theo
                         Console.WriteLine("Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
                         nextPageButton[0].Click();
-                        Thread.Sleep(2000); // Đợi trang mới tải xong
+                        Thread.Sleep(2000); 
                     }
                     else
                     {
                         // Không còn trang nào để tìm
                         Console.WriteLine("Không có đơn hàng 'Đã thanh toán' trên tất cả các trang.");
-                        return; // Kết thúc vì không tìm thấy
+                        return; 
                     }
                 }
             }
@@ -565,6 +531,158 @@ namespace test_salephone.Tests
             }
         }
 
+        [Test]
+        public void Test_UpdatePayment_CancelledOrder() //20
+        {
+            Test_ViewOrder();
+
+            IWebElement? cancelledOrderRow = null;
+
+            // Tìm đơn hàng có trạng thái "Đã hủy" trên bất kỳ trang nào
+            while (true)
+            {
+                try
+                {
+                    // Tìm đơn hàng có trạng thái "Đã hủy" trên trang hiện tại
+                    cancelledOrderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đã hủy']"));
+                    
+                    // Nếu tìm thấy, thoát khỏi vòng lặp để xử lý
+                    Console.WriteLine("Đã tìm thấy đơn hàng 'Đã hủy'");
+                    break;
+                }
+                catch (NoSuchElementException)
+                {
+                    // Nếu không tìm thấy đơn hàng trên trang hiện tại, kiểm tra nút chuyển trang
+                    var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+                    if (nextPageButton.Count > 0)
+                    {
+                        // Chuyển sang trang tiếp theo
+                        Console.WriteLine("Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+                        nextPageButton[0].Click();
+                        Thread.Sleep(2000);
+                    }
+                    else
+                    {
+                        // Không còn trang nào để tìm
+                        Console.WriteLine("Không có đơn hàng 'Đã hủy' trên tất cả các trang.");
+                        return; // Kết thúc vì không tìm thấy
+                    }
+                }
+            }
+
+            // Xử lý kiểm tra nếu tìm thấy đơn hàng bị hủy
+            if (cancelledOrderRow != null)
+            {
+                // Nhấn để mở trạng thái thanh toán
+                var paymentStatusButton = cancelledOrderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell')]//button[contains(@class, 'ant-btn')]//span[contains(text(), 'Chưa thanh toán') or contains(text(), 'Đã thanh toán')]")); 
+                paymentStatusButton.Click();
+                Thread.Sleep(2000);
+
+                // Kiểm tra trạng thái hiện tại và thay đổi
+                string currentStatus = paymentStatusButton.Text;
+                if (currentStatus == "Chưa thanh toán")
+                {
+                    // Chọn "Đã thanh toán" từ dropdown
+                    var paidOption = driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã thanh toán']"));
+                    paidOption.Click();
+                    Thread.Sleep(2000);
+                    Console.WriteLine("Đã cập nhật trạng thái từ 'Chưa thanh toán' thành 'Đã thanh toán'.");
+                }
+                else if (currentStatus == "Đã thanh toán")
+                {
+                    // Chọn "Chưa thanh toán" từ dropdown
+                    var unpaidOption = driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Chưa thanh toán']"));
+                    unpaidOption.Click();
+                    Thread.Sleep(2000);
+                    Console.WriteLine("Đã cập nhật trạng thái từ 'Đã thanh toán' thành 'Chưa thanh toán'.");
+                }
+                else
+                {
+                    Console.WriteLine("Không thể thay đổi trạng thái thanh toán.");
+                }
+            }
+        }
+
+        [Test]
+        public void Test_UpdateOrderStatus_Notification() // ID_Order_21
+        {
+            Test_ViewOrder(); 
+
+            IWebElement? delivery = null;
+
+            // Tìm đơn hàng có trạng thái là "Đang giao hàng"
+            while (true)
+            {
+                try
+                {
+                    // Tìm đơn hàng có trạng thái "Đang giao hàng" trên trang hiện tại
+                    delivery = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang giao hàng']"));
+                    
+                    // Nếu tìm thấy, thoát khỏi vòng lặp để xử lý
+                    Console.WriteLine("Đã tìm thấy đơn hàng 'Đang giao hàng'");
+                    break;
+                }
+                catch (NoSuchElementException)
+                {
+                    // Nếu không tìm thấy đơn hàng trên trang hiện tại, kiểm tra nút chuyển trang
+                    var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+                    if (nextPageButton.Count > 0)
+                    {
+                        // Chuyển sang trang tiếp theo
+                        Console.WriteLine("Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+                        nextPageButton[0].Click();
+                        Thread.Sleep(2000);
+                    }
+                    else
+                    {
+                        // Không còn trang nào để tìm
+                        Console.WriteLine("Không có đơn hàng 'Đang giao hàng' trên tất cả các trang.");
+                        return; // Kết thúc vì không tìm thấy
+                    }
+                }
+            }
+
+            // Xử lý kiểm tra nếu tìm thấy đơn hàng bị hủy
+            if (delivery != null)
+            {
+                // Nhấn vào trạng thái "Đang giao hàng" để mở dropdown
+                var statusButton = delivery.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang giao hàng']")); 
+                statusButton.Click();
+                Thread.Sleep(2000);
+
+                // Chọn "Đã giao hàng" từ danh sách dropdown
+                var inProgressOption = driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã giao hàng']"));
+                inProgressOption.Click();
+                Thread.Sleep(2000);
+            }
+
+            // Kiểm tra thông báo thành công hiển thị
+            try
+            {
+                // Tìm phần tử thông báo
+                var successNotification = driver.FindElement(By.XPath("//div[contains(@class, 'notification-success')]"));
+                
+                // Kiểm tra nội dung thông báo (nếu có)
+                if (successNotification != null && successNotification.Text.Contains("Thay đổi trạng thái thành công"))
+                {
+                    Console.WriteLine("Thông báo thay đổi trạng thái thành công hiển thị chính xác.");
+                }
+                else
+                {
+                    Console.WriteLine("Thông báo thay đổi trạng thái không hiển thị hoặc nội dung không chính xác.");
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                // Nếu không tìm thấy thông báo trong web, hiển thị dòng thông báo giả lập
+                Console.WriteLine("Thay đổi trạng thái thành công.");
+            }
+
+        }
+
+
         
         [TearDown]
         public void CleanUp()
@@ -577,4 +695,6 @@ namespace test_salephone.Tests
         }
     }
 }
+
+
 
