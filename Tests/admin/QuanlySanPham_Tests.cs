@@ -714,7 +714,6 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
             string status = "Fail";
             try
             {
-                
                 Thread.Sleep(6000);
                 driver.FindElement(By.XPath("//th[4]//div[1]//span[2]//span[1]//*[name()='svg']")).Click();
                 Thread.Sleep(2000);
