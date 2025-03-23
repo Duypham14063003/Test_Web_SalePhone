@@ -6,18 +6,26 @@ using System.Linq;
 namespace test_salephone.Utilities
 {
 
-    // Định nghĩa lớp TestCase chứa các thuộc tính cần thiết
-
-
     public class ExcelReportHelper
     {
         public class TestCase
         {
             public string Id { get; set; }
             public string data { get; set; }
-            // Bạn có thể bổ sung thêm các thuộc tính khác nếu cần
         }
-        private static string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx");
+
+
+        private static string[] possiblePaths =
+        {
+            //cái file excel chỗ report tui xài không được nene tui đung đuongfw dẫn cứng
+            "D:\\BDCLPM.xlsx", 
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx")  
+        };
+
+        // Chọn đường dẫn đầu tiên tồn tại, nếu không có, dùng đường dẫn cuối cùng
+        private static string filePath = possiblePaths.FirstOrDefault(File.Exists) ?? possiblePaths.Last();
+
+
         public static void WriteToExcel(string sheetName, string numberTest, string status, string actualResult = "")
         {
             if (!File.Exists(filePath))
@@ -60,7 +68,7 @@ namespace test_salephone.Utilities
             }
         }
 
-         // Hàm đọc dữ liệu từ Excel và trả về danh sách các TestCase
+        // Hàm đọc dữ liệu từ Excel và trả về danh sách các TestCase
         public static List<TestCase> GetTestCases(string worksheetName)
         {
             var testCases = new List<TestCase>();
@@ -90,14 +98,15 @@ namespace test_salephone.Utilities
             return testCases;
         }
 
-        public static IEnumerable<object[]> GetTestCasesForNUnit()
-        {
-            // Sử dụng tên sheet cố định "testCase_Duy"
-            var testCases = GetTestCases("TestData_TKSP");
-            foreach (var testCase in testCases)
-            {
-                yield return new object[] { testCase.Id, testCase.data };
-            }
-        }
+        //    public static IEnumerable<object[]> GetTestCasesForNUnit()
+        //    {
+        //        // Sử dụng tên sheet cố định "testCase_Duy"
+        //        var testCases = GetTestCases("TestData_TKSP");
+        //        foreach (var testCase in testCases)
+        //        {
+        //            yield return new object[] { testCase.Id, testCase.data };
+        //        }
+        //    }
+        //}
     }
 }

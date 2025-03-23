@@ -70,7 +70,7 @@ namespace test_salephone.PageObjects
             //Thread.Sleep(5000);
             wait.Until(ExpectedConditions.ElementToBeClickable(addProductButton)).Click();
             driver.FindElement(productNameField).SendKeys(productName);
-            // Thread.Sleep(5000);
+            Thread.Sleep(5000);
             driver.FindElement(brandDropdown).Click();
             wait.Until(ExpectedConditions.ElementToBeClickable(brandOptionApple)).Click();
 
@@ -504,5 +504,43 @@ namespace test_salephone.PageObjects
                 return false;
             }
         }
+        public bool UpdateProductPrice(string productName, string newPrice)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 Đang tìm sản phẩm '{productName}' để cập nhật giá...");
+
+                // Tìm ô tìm kiếm trên trang Admin và nhập tên sản phẩm
+                var searchBox = driver.FindElement(By.XPath("//input[@placeholder='Tìm kiếm sản phẩm']"));
+                searchBox.Clear();
+                searchBox.SendKeys(productName);
+                Thread.Sleep(2000);
+
+                // Nhấn vào nút chỉnh sửa sản phẩm tương ứng
+                var editButton = driver.FindElement(By.XPath($"//td[contains(text(),'{productName}')]/following-sibling::td//button[contains(text(),'Sửa')]"));
+                editButton.Click();
+                Thread.Sleep(3000);
+
+                // Tìm ô nhập giá và thay đổi giá mới
+                var priceInput = driver.FindElement(By.XPath("//input[@name='price']"));
+                priceInput.Clear();
+                priceInput.SendKeys(newPrice);
+                Thread.Sleep(1000);
+
+                // Nhấn nút lưu thay đổi
+                var saveButton = driver.FindElement(By.XPath("//button[contains(text(),'Lưu')]"));
+                saveButton.Click();
+                Thread.Sleep(5000);
+
+                Console.WriteLine($"✅ Đã cập nhật giá sản phẩm '{productName}' thành {newPrice}!");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Lỗi khi cập nhật giá sản phẩm '{productName}': {ex.Message}");
+                return false;
+            }
+        }
+
     }
 }
