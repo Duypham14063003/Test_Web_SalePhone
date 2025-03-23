@@ -219,7 +219,6 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
             }
             //Ghi trạng thái test ra Excel nếu cần
             ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
-
 }
 
         // Test cập nhật sản phẩm (dữ liệu được đọc từ Excel theo testCaseID)
