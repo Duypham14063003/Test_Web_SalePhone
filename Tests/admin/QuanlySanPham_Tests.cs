@@ -646,7 +646,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         [Test]
         public void Test_TimKiemSanPhamBangMa()
         {
-            string testCaseID = "ID_QLSANPHAM_12";
+            string testCaseID = "ID_QLSANPHAM_11";
             string status = "Fail";
             try
             {
@@ -678,7 +678,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         [Test]
         public void Test_TimKiemSanPhamBangTen()
         {
-            string testCaseID = "ID_QLSANPHAM_13";
+            string testCaseID = "ID_QLSANPHAM_12";
             string status = "Fail";
             try
             {
@@ -709,7 +709,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         [Test]
         public void Test_TimKiemSanPhamBangTheLoai()
         {
-            string testCaseID = "ID_QLSANPHAM_14";
+            string testCaseID = "ID_QLSANPHAM_13";
             string status = "Fail";
             try
             {
@@ -740,7 +740,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         [Test]
         public void Test_SapXepGia()
         {
-            string testCaseID = "ID_QLSANPHAM_15" + "ID_QLSANPHAM_16";
+            string testCaseID = "ID_QLSANPHAM_14" + "ID_QLSANPHAM_15";
             string status = "Fail";
             try
             {
@@ -761,20 +761,20 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
             }
               if (status == "Pass")
                 {
+                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_14", status, "Sắp xếp hoạt động chính xác");
                     ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_15", status, "Sắp xếp hoạt động chính xác");
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_16", status, "Sắp xếp hoạt động chính xác");
                 }
                 else
                 {
-                   ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_15", status, "Sắp xếp không hoạt động chính xác");
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_16", status, "Sắp xếp không hoạt động chính xác");
+                   ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_14", status, "Sắp xếp không hoạt động chính xác");
+                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_15", status, "Sắp xếp không hoạt động chính xác");
                 }
         }
 
         [Test]
         public void Test_SapXepTonKho()
         {
-            string testCaseID = "ID_QLSANPHAM_17" + "ID_QLSANPHAM_18";
+            string testCaseID = "ID_QLSANPHAM_16" + "ID_QLSANPHAM_17";
             string status = "Fail";
             try
             {
@@ -794,20 +794,20 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
             }
           if (status == "Pass")
                 {
+                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_16", status, "Sắp xếp hoạt động chính xác");
                     ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_17", status, "Sắp xếp hoạt động chính xác");
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_18", status, "Sắp xếp hoạt động chính xác");
                 }
                 else
                 {
-                   ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_17", status, "Sắp xếp không hoạt động chính xác");
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_18", status, "Sắp xếp không hoạt động chính xác");
+                   ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_16", status, "Sắp xếp không hoạt động chính xác");
+                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_17", status, "Sắp xếp không hoạt động chính xác");
                 }
         }
 
         [Test]
         public void Test_SapXepDaBan()
         {
-            string testCaseID = "ID_QLSANPHAM_19" + "ID_QLSANPHAM_20";
+            string testCaseID = "ID_QLSANPHAM_18" + "ID_QLSANPHAM_19";
             string status = "Fail";
             try
             {
@@ -827,13 +827,13 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
             }
             if (status == "Pass")
                 {
+                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_18", status, "Sắp xếp hoạt động chính xác");
                     ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_19", status, "Sắp xếp hoạt động chính xác");
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_20", status, "Sắp xếp hoạt động chính xác");
                 }
                 else
                 {
-                   ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_19", status, "Sắp xếp không hoạt động chính xác");
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_20", status, "Sắp xếp không hoạt động chính xác");
+                   ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_18", status, "Sắp xếp không hoạt động chính xác");
+                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", "ID_QLSANPHAM_19", status, "Sắp xếp không hoạt động chính xác");
                 }
         }
 
