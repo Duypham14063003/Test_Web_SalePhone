@@ -3,6 +3,8 @@ using OpenQA.Selenium.Chrome;
 using test_salephone.Helpers;
 using OpenQA.Selenium.Support.UI;
 using test_salephone.Utilities;
+using System.Text.RegularExpressions;
+
 namespace test_salephone.Tests
 {
     [TestFixture]
@@ -1689,6 +1691,210 @@ namespace test_salephone.Tests
             }
 
             // Ghi trạng thái test ra Excel nếu cần
+            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, thongBao);
+        }
+
+        [Test]
+        [Description("Kiểm tra biểu đồ hiển thị đúng tỷ lệ phương thức thanh toán.")]
+        [Category("Order Management")]
+        [TestCase("ID_Order_32", "Biểu đồ hiển thị đúng")]
+        public void Test_PieChart_Payment(String testCaseID, String thongBao)
+        {
+            string status = "Fail";
+            try
+            {
+                //Duyệt qua tất cả các trang để lấy dữ liệu
+                Dictionary<string, int> paymentCounts = new Dictionary<string, int>();
+
+                while (true)
+                {
+                    var orderRows = driver.FindElements(By.XPath("//tbody[@class='ant-table-tbody']/tr"));
+
+                    foreach (var row in orderRows)
+                    {
+                        try
+                        {
+                            string paymentMethod = row.FindElement(By.XPath("./td[7]")).Text.Trim();
+                            if (paymentCounts.ContainsKey(paymentMethod))
+                                paymentCounts[paymentMethod]++;
+                            else
+                                paymentCounts[paymentMethod] = 1;
+                        }
+                        catch (NoSuchElementException) { continue; }
+                    }
+
+                    // Kiểm tra nút chuyển trang
+                    var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+                    if (nextPageButton.Count > 0)
+                    {
+                        Console.WriteLine("➡️ Chuyển sang trang tiếp theo...");
+                        nextPageButton[0].Click();
+                        Thread.Sleep(2000);
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ Đã duyệt qua tất cả các trang.");
+                        break; // Không còn trang nào để chuyển -> Thoát vòng lặp
+                    }
+                }
+
+                //Tính tổng số đơn hàng từ bảng
+                int paypalOrders = paymentCounts.ContainsKey("Thanh toán bằng paypal") ? paymentCounts["Thanh toán bằng paypal"] : 0;
+                int codOrders = paymentCounts.ContainsKey("Thanh toán khi nhận hàng") ? paymentCounts["Thanh toán khi nhận hàng"] : 0;
+                int totalOrders = paypalOrders + codOrders;
+
+                Console.WriteLine($"📌 Tổng số đơn hàng từ bảng: {totalOrders}");
+                Console.WriteLine($"📌 Thanh toán bằng Paypal: {paypalOrders} đơn hàng");
+                Console.WriteLine($"📌 Thanh toán khi nhận hàng: {codOrders} đơn hàng");
+
+                //Tính phần trăm từng phương thức thanh toán
+                double paypalPercentage = totalOrders > 0 ? Math.Round((double)paypalOrders / totalOrders * 100, 0) : 0;
+                double codPercentage = totalOrders > 0 ? Math.Round((double)codOrders / totalOrders * 100, 0) : 0;
+
+                Console.WriteLine($"📊 Dự đoán phần trăm từ bảng: Paypal: {paypalPercentage}%, Thanh toán khi nhận hàng: {codPercentage}%");
+
+                //Lấy thông tin từ Pie Chart
+                Thread.Sleep(2000);
+                var pieChart = driver.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[1]/div/div"));
+                string pieChartText = pieChart.Text;
+                Console.WriteLine("📊 Nội dung Pie Chart: " + pieChartText);
+
+                //So sánh phần trăm từ bảng với Pie Chart
+                bool isMatch = pieChartText.Contains($"{paypalPercentage}%") && pieChartText.Contains($"{codPercentage}%");
+
+                if (isMatch)
+                {
+                    Console.WriteLine($"✅ Biểu đồ hiển thị đúng.");
+                    status = "Pass";
+                }
+                else
+                {
+                    Console.WriteLine($"❌ Sai lệch: Pie Chart không khớp với dữ liệu thực tế.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+            }
+
+            // Ghi kết quả vào Excel
+            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, thongBao);
+        }
+
+        [Test]
+        [Description("Kiểm tra biểu đồ hiển thị khi không có đơn hàng nào.")]
+        [Category("Order Management")]
+        [TestCase("ID_Order_33", "Biểu đồ không hiển thị gì cả")]
+        public void Test_PieChart_NoOrders(String testCaseID, String thongBao)
+        {
+            string status = "Fail";
+            try
+            {
+                // Kiểm tra tổng số đơn hàng hiển thị
+                var orderRows = driver.FindElements(By.XPath("//tbody[@class='ant-table-tbody']/tr"));
+                if (orderRows.Count > 0)
+                {
+                    Console.WriteLine("❌ Vẫn còn đơn hàng trong bảng. Testcase thất bại!");
+                }
+                else
+                {
+                    Console.WriteLine("✅ Không có đơn hàng nào trong bảng. Tiếp tục kiểm tra biểu đồ...");
+                    
+                    // Kiểm tra Pie Chart
+                    var pieChart = driver.FindElements(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[1]/div/div"));
+                    if (pieChart.Count == 0 || string.IsNullOrEmpty(pieChart[0].Text.Trim()))
+                    {
+                        Console.WriteLine("✅ Biểu đồ không hiển thị gì cả.");
+                        status = "Pass";
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Biểu đồ vẫn hiển thị: {pieChart[0].Text}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+            }
+
+            // Ghi kết quả vào Excel
+            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, thongBao);
+        }
+
+        [Test]
+        [Description("Kiểm tra biểu đồ hiển thị khi chỉ có 1 phương thức thanh toán.")]
+        [Category("Order Management")]
+        [TestCase("ID_Order_34", "Biểu đồ hiển thị đúng tỷ lệ: 100%")]
+        public void Test_PieChart_SinglePaymentMethod(String testCaseID, String thongBao)
+        {
+            string status = "Fail";
+            try
+            {
+                // Bước 1: Đếm số lượng đơn hàng theo phương thức thanh toán
+                HashSet<string> uniquePayments = new HashSet<string>();
+                while (true)
+                {
+                    var orderRows = driver.FindElements(By.XPath("//tbody[@class='ant-table-tbody']/tr"));
+
+                    foreach (var row in orderRows)
+                    {
+                        try
+                        {
+                            string paymentMethod = row.FindElement(By.XPath("./td[7]")).Text.Trim();
+                            uniquePayments.Add(paymentMethod);
+                        }
+                        catch (NoSuchElementException) { continue; }
+                    }
+
+                    // Kiểm tra nút chuyển trang
+                    var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+                    if (nextPageButton.Count > 0)
+                    {
+                        Console.WriteLine("➡️ Chuyển sang trang tiếp theo...");
+                        nextPageButton[0].Click();
+                        Thread.Sleep(2000);
+                    }
+                    else
+                    {
+                        Console.WriteLine("✅ Đã duyệt qua tất cả các trang.");
+                        break;
+                    }
+                }
+
+                // Kiểm tra nếu chỉ có 1 phương thức thanh toán
+                if (uniquePayments.Count == 1)
+                {
+                    string onlyPaymentMethod = uniquePayments.First();
+                    Console.WriteLine($"✅ Tất cả đơn hàng đều dùng phương thức: {onlyPaymentMethod}.");
+
+                    // Kiểm tra Pie Chart
+                    Thread.Sleep(2000);
+                    var pieChart = driver.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[1]/div/div"));
+                    string pieChartText = pieChart.Text;
+
+                    if (pieChartText.Contains("100%"))
+                    {
+                        Console.WriteLine($"✅ Biểu đồ hiển thị đúng: {onlyPaymentMethod} chiếm 100%.");
+                        status = "Pass";
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Biểu đồ không hiển thị đúng 100%. Nội dung: {pieChartText}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("❌ Có nhiều hơn 1 phương thức thanh toán. Test thất bại!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+            }
+
+            // Ghi kết quả vào Excel
             ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, thongBao);
         }
 
