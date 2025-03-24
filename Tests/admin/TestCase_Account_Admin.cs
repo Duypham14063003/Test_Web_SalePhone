@@ -25,7 +25,7 @@ namespace test_salephone.Tests
             driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
 
             //Vào trang quản lý người dùng
-            Thread.Sleep(2000);
+            Thread.Sleep(4000);
             driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
             Thread.Sleep(2000);
             IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Người dùng')]"));
@@ -175,8 +175,14 @@ namespace test_salephone.Tests
                 Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
                 status = "Fail";
             }
-            //Ghi trạng thái test ra Excel nếu cần
+            if(element.Text.Trim() == "Cập nhật thành công")
+            {
+                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
+            }
+            else
+            {
             ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
+            }
         }
 
         [Test]
@@ -186,10 +192,10 @@ namespace test_salephone.Tests
         [TestCase("ID_TaiKhoan_3", "Email này đã được đăng ký, vui lòng chọn email khác")]
         [TestCase("ID_TaiKhoan_4", "Đăng ký tài khoản thành công")]
         [TestCase("ID_TaiKhoan_5", "Mật khẩu phải có ít nhất 1 ký tự viết hoa và ít nhất 6 ký tự")]
-        [TestCase("ID_TaiKhoan_6", "Mật khẩu phải có ít nhất 1 ký tự viết hoa và ít nhất 6 ký tự")]
+        [TestCase("ID_TaiKhoan_6", "Mật khẩu phải có tối thiểu 6 ký tự")]
         [TestCase("ID_TaiKhoan_7", "Mật khẩu phải có ít nhất 1 ký tự viết hoa và ít nhất 6 ký tự")]
-        [TestCase("ID_TaiKhoan_8", "Hãy nhập đầy đủ thông tin")]
-        [TestCase("ID_TaiKhoan_9", "Hãy nhập đầy đủ thông tin")]
+        [TestCase("ID_TaiKhoan_8", "Mật khẩu là trường bắt buộc")]
+        [TestCase("ID_TaiKhoan_9", "Nhập lại mật khẩu là trường bắt buộc")]
         public void Test_DangKy(String testCaseID, String thongBao)
         {
             {
@@ -292,6 +298,7 @@ namespace test_salephone.Tests
         public void Test_XoaTaiKhoan(string testCaseID, string thongBao, string email)
         {
             string status = "Fail";
+            Setup();
             try
             {
                 driver.FindElement(By.XPath($"//tr[td[contains(normalize-space(.), '{email}')]]//span[@aria-label='delete']")).Click();
@@ -338,6 +345,7 @@ namespace test_salephone.Tests
         {
             string testCaseID = "ID_TaiKhoan_26";
             string status = "Fail";
+            string actual = "N/A";
             Setup();
             try
             {
@@ -352,19 +360,39 @@ namespace test_salephone.Tests
                 int totalPages = (int)Math.Ceiling((double)totalUsers / usersPerPage);
                 Console.WriteLine($"Tổng số trang: {totalPages}");
 
-                if (totalPages == 1)
+                if (totalPages >= 1)
                 {
-                    var products = driver.FindElements(By.XPath("//tr[contains(@class, 'ant-table-row')]"));
-                    Console.WriteLine($"Số người dùng trên trang đầu tiên: {products.Count}");
-                    if (products.Count == totalUsers)
-                        Console.WriteLine("Tất cả người dùng được hiển thị trên 1 trang.");
-                    else
-                        Console.WriteLine($"LỖI: Số người dùng không khớp (hiển thị: {products.Count}, mong đợi: {totalUsers}).");
+                    for (int i = 1; i <= totalPages; i++)
+                    {
+                        var products = driver.FindElements(By.XPath("//tr[contains(@class, 'ant-table-row')]"));
+                        Console.WriteLine($"Số người dùng trên trang {i}: {products.Count}");
+
+                        if (i < totalPages && products.Count != 10)
+                        {
+                            Console.WriteLine($"LỖI: Trang {i} không đủ 10 người dùng.");
+                            status = "Fail";
+                            break;
+                        }
+                        else if (i == totalPages && products.Count != totalUsers % 10)
+                        {
+                            Console.WriteLine($"LỖI: Trang cuối cùng có {products.Count} người dùng, mong đợi {totalUsers % 10}.");
+                            status = "Fail";
+                            break;
+                        }
+
+                        // Nhấn nút chuyển trang nếu chưa đến trang cuối
+                        if (i < totalPages)
+                        {
+                            driver.FindElement(By.XPath("//li[@title='Next Page']//button[@type='button']")).Click();
+                            Thread.Sleep(3000);
+                        }
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"LỖI: Có nhiều hơn 1 trang mặc dù tổng người dùng là {totalUsers}.");
+                    Console.WriteLine("Chỉ có 1 trang, không cần kiểm tra phân trang.");
                 }
+                actual = "Số trang đúng với số lượng sản phẩm";
                 status = "Pass";
             }
             catch (Exception ex)
@@ -374,7 +402,7 @@ namespace test_salephone.Tests
             }
             if (status == "Pass")
             {
-                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
+                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
             }
             else
             {
@@ -387,6 +415,8 @@ namespace test_salephone.Tests
         {
             string testCaseID = "ID_TaiKhoan_27";
             string status = "Fail";
+            string actual = "";
+            Setup();
             try
             {
 
@@ -423,6 +453,7 @@ namespace test_salephone.Tests
                 {
                     Console.WriteLine("Chỉ có 1 trang, không cần kiểm tra nút Next/Previous.");
                 }
+                actual = "Hiển thị đầy đủ danh sách của những trang tiếp theo";
                 status = "Pass";
             }
             catch (Exception ex)
@@ -432,7 +463,7 @@ namespace test_salephone.Tests
             }
             if (status == "Pass")
             {
-                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
+                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
             }
             else
             {
@@ -445,6 +476,8 @@ namespace test_salephone.Tests
         {
             string testCaseID = "ID_TaiKhoan_28";
             string status = "Fail";
+            string actual = "";
+            Setup();
             try
             {
 
@@ -498,6 +531,7 @@ namespace test_salephone.Tests
                 {
                     Console.WriteLine("Chỉ có 1 trang, không cần kiểm tra nút Next/Previous.");
                 }
+                actual = "Hiển thị đầy đủ danh sách của trang trước";
                 status = "Pass";
             }
             catch (Exception ex)
@@ -507,7 +541,7 @@ namespace test_salephone.Tests
             }
             if (status == "Pass")
             {
-                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
+                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
             }
             else
             {
@@ -520,35 +554,53 @@ namespace test_salephone.Tests
         {
             string testCaseID = "ID_TaiKhoan_29";
             string status = "Fail";
+            string actual = "";
+            Setup();
             try
             {
-
                 Thread.Sleep(6000);
-                // Chuyển sang trang số 2 (ví dụ)
-                driver.FindElement(By.XPath("//a[normalize-space()='2']")).Click();
+
+                // Lấy tổng số trang từ giao diện
+                var totalUsersText = driver.FindElement(By.XPath("//div[@class='ant-table-title']//div[1]")).Text;
+                int totalUsers = int.Parse(totalUsersText.Split(':')[1].Trim());
+
+                int usersPerPage = 10;
+                int totalPages = (int)Math.Ceiling((double)totalUsers / usersPerPage);
+                Console.WriteLine($"Tổng số trang: {totalPages}");
+
+                // Random chọn 1 trang bất kỳ từ 1 đến totalPages
+                Random rnd = new Random();
+                int randomPage = rnd.Next(1, totalPages + 1);
+                Console.WriteLine($"🔹 Chuyển đến trang số: {randomPage}");
+
+                // Click vào trang ngẫu nhiên
+                driver.FindElement(By.XPath($"//a[normalize-space()='{randomPage}']")).Click();
                 Thread.Sleep(3000);
+
+                // Kiểm tra số đơn hàng trên trang được chọn
                 int UserOnPage = driver.FindElements(By.CssSelector("table tbody tr")).Count;
-                Console.WriteLine($"Số đơn hàng trên trang 2: {UserOnPage}");
-                if (UserOnPage == 10)
-                    Console.WriteLine("✅ Trang 2 hiển thị đúng 10 đơn hàng.");
+                Console.WriteLine($"Số đơn hàng trên trang {randomPage}: {UserOnPage}");
+
+                if (randomPage < totalPages && UserOnPage == 10)
+                    Console.WriteLine($"✅ Trang {randomPage} hiển thị đúng 10 đơn hàng.");
+                else if (randomPage == totalPages && (UserOnPage > 0 && UserOnPage <= 10))
+                    Console.WriteLine($"✅ Trang cuối ({randomPage}) hiển thị đúng số đơn hàng còn lại.");
                 else
-                    Console.WriteLine("❌ Trang 2 hiển thị sai số lượng đơn hàng!");
+                    Console.WriteLine($"❌ LỖI: Trang {randomPage} hiển thị sai số lượng đơn hàng!");
+
+                actual = $"Hiển thị danh sách sản phẩm của trang {randomPage}";
                 status = "Pass";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"⚠️ ID_SelectPage Lỗi: {ex.Message}");
+                Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
                 status = "Fail";
             }
-            if (status == "Pass")
-            {
-                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
-            }
-            else
-            {
-                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status);
-            }
+
+            // Ghi kết quả vào file Excel
+            ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
         }
+
 
 
         [TearDown]
