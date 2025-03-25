@@ -8,7 +8,7 @@ namespace test_salephone.Helpers
     public static class ExcelReportHelper_Phuc
     {
         private static string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx");
-        public static void WriteToExcel(string Worksheets, string numberTest, string status, string actual = null)
+        public static void WriteToExcel(string Worksheets, string numberTest, string status, string actual = null, string intergration = null)
         {
             using (var workbook = new XLWorkbook(filePath))
             {
@@ -22,13 +22,25 @@ namespace test_salephone.Helpers
                 if (row != null)
                 {
                     string productName = row.Cell(2).GetValue<string>();
-                    // Console.WriteLine($"✅ Tên sản phẩm có ID {numberTest}: {productName}");
-
                     int rowIndex = row.RowNumber();
 
-                    // Ghi giá trị actual (nếu có, nếu không thì để trống hoặc giá trị mặc định)
-                    worksheet.Cell(rowIndex, 9).Value = actual != null ? $"Hệ thống hiển thị thông báo: '{actual}'" : "N/A";
-                    Console.WriteLine($"✅ Đã cập nhật Actual cho {numberTest}: {actual ?? "N/A"}");
+                    // Ghi giá trị actual và intergration vào cùng một ô
+                    string cellValue = "";
+                    if (actual != null)
+                    {
+                        cellValue += $"Hệ thống hiển thị thông báo: '{actual}'";
+                    }
+                    if (intergration != null)
+                    {
+                        cellValue += (cellValue != "" ? "\n" : "") + $"Thông tin trên web:\n {intergration}";
+                    }
+                    else if (intergration == null)
+                    {
+                        cellValue += (cellValue != "" ? "\n" : "") + $"Hệ thống không cập nhật lại thông tin";
+                    }
+                    worksheet.Cell(rowIndex, 9).Value = cellValue;
+                    worksheet.Cell(rowIndex, 9).Style.Alignment.SetWrapText(true); // Bật chế độ xuống dòng
+                    Console.WriteLine($"✅ Đã cập nhật Actual và Intergration cho {numberTest}: {cellValue}");
 
                     // Ghi giá trị status
                     worksheet.Cell(rowIndex, 10).Value = status;

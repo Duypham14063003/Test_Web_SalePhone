@@ -52,7 +52,7 @@ namespace test_salephone.Tests
         [TestCase("ID_TaiKhoan_15", "Số điện thoại phải có từ 7 đến 20 số.")]
         [TestCase("ID_TaiKhoan_16", "Cập nhật thành công")]
         [TestCase("ID_TaiKhoan_17", "Cập nhật thành công")]
-        [TestCase("ID_TaiKhoan_18", "Địa chỉ quá dài, tối đa 100 ký tự")]
+        [TestCase("ID_TaiKhoan_18", "Địa chỉ quá dài.")]
         [TestCase("ID_TaiKhoan_19", "Cập nhật thành công")]
         [TestCase("ID_TaiKhoan_20", "Ảnh đại diện không phù hợp, ảnh phải là một định dạng đuôi .png, .jpg,...")]
         [TestCase("ID_TaiKhoan_21", "Vai trò quá dài.")]
@@ -62,8 +62,12 @@ namespace test_salephone.Tests
 
         public void Test_CapNhatTaiKhoan(String testCaseID, String thongBao)
         {
-            string actual = "";
+            string actual = null;
             string status = "Fail";
+            string intergration = null;
+            Setup();
+            Thread.Sleep(20000);
+
             try
             {
                 // Đọc data test từ Excel
@@ -139,6 +143,7 @@ namespace test_salephone.Tests
                     }
                     catch (NoSuchElementException)
                     {
+                        status = "Fail";
                         return null;
                     }
                 });
@@ -167,22 +172,92 @@ namespace test_salephone.Tests
                         actual = element.Text.Trim();
                         status = "Pass";
                     }
-
                 }
+                // Thêm điều kiện kiểm tra "Cập nhật thành công" và so sánh với testFields
+                if (element.Text.Trim() == "Cập nhật thành công")
+                {
+                    string localImagePath = $"{testFields[6]}";
+                    string base64Local = ImageToBase64(localImagePath);
+                    string shortBase64Local = base64Local.Substring(0, 50);
+                    Console.WriteLine($"Giá trị của ảnh trên máy: {base64Local.Substring(0, 50)}");
+
+                    driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app");
+                    Thread.Sleep(2000);
+                    driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+
+                    // Đăng xuất tài khoản admin
+                    Thread.Sleep(4000);
+                    driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
+
+                    Thread.Sleep(1000);
+                    driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
+
+                    // Đăng nhập
+                    driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys(testFields[1]);
+                    driver.FindElement(By.CssSelector("input[placeholder='Nhập mật khẩu']")).SendKeys("123456");
+                    driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
+
+                    Thread.Sleep(3000);
+                    driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+
+                    // Vào trang quản lý người dùng
+                    Thread.Sleep(2000);
+                    driver.FindElement(By.XPath("//p[contains(text(),'Thông tin người dùng')]")).Click();
+
+                    // Lấy giá trị từ giao diện
+                    Thread.Sleep(500);
+                    string textName = driver.FindElement(By.XPath("//input[@id='name']")).GetAttribute("value");
+                    string textEmail = driver.FindElement(By.XPath("//input[@id='email']")).GetAttribute("value");
+                    string textPhone = driver.FindElement(By.XPath("//input[@id='phone']")).GetAttribute("value");
+                    string textAddress = driver.FindElement(By.XPath("//input[@id='address']")).GetAttribute("value");
+                    string imgSrc = driver.FindElement(By.XPath("//img[@alt='avatar']")).GetAttribute("src");
+
+
+                    string base64WebImage = imgSrc.Split(',')[1];
+                    string shortBase64 = base64WebImage.Substring(0, 50);
+                    // So sánh với testFields
+                    if (textName != testFields[0] || textEmail != testFields[1] || textPhone != testFields[2] ||
+                        textAddress != testFields[3])
+                    {
+                        if (shortBase64Local != shortBase64)
+                        {
+                            status = "Fail";
+                            intergration = $"Tên: {textName}\nEmail: {textEmail}\nĐiện thoại: {textPhone}\nĐịa chỉ: {textAddress}\nẢnh: {shortBase64} (KHÔNG khớp ở định dạng base64)\nHệ thống cập nhật lại tài khoản không chính xác với thông tin sau chỉnh sửa!";
+                        }
+                        else
+                        {
+                            status = "Fail";
+                            // Console.WriteLine("❌ Dữ liệu không khớp:");
+                            // Console.WriteLine($"Tên: {textName} (Kỳ vọng: {testFields[0]})");
+                            // Console.WriteLine($"Email: {textEmail} (Kỳ vọng: {testFields[1]})");
+                            // Console.WriteLine($"Điện thoại: {textPhone} (Kỳ vọng: {testFields[2]})");
+                            // Console.WriteLine($"Địa chỉ: {textAddress} (Kỳ vọng: {testFields[3]})");
+                            // Console.WriteLine($"hình ảnh: {shortBase64Local} (Kỳ vọng: {shortBase64})");
+                            intergration = $"Tên: {textName}\nEmail: {textEmail}\nĐiện thoại: {textPhone}\nĐịa chỉ: {textAddress}\nẢnh: {shortBase64}(Khớp ở định dạng base64)\nHệ thống cập nhật lại tài khoản không chính xác với thông tin sau chỉnh sửa!";
+                        }
+
+
+                    }
+                    else
+                    {
+                        status = "Pass";
+                        // Console.WriteLine("✅ Dữ liệu khớp với đầu vào:");
+                        // Console.WriteLine($"Tên: {textName}");
+                        // Console.WriteLine($"Email: {textEmail}");
+                        // Console.WriteLine($"Điện thoại: {textPhone}");
+                        // Console.WriteLine($"Địa chỉ: {textAddress}");
+                        // Console.WriteLine($"Ảnh: {imgSrc.Substring(0, 50)}");
+                        intergration = $"Tên: {textName}\nEmail: {textEmail}\nĐiện thoại: {textPhone}\nĐịa chỉ: {textAddress}\nẢnh: {shortBase64}\nHệ thống cập nhật lại tài khoản chính xác với thông tin sau chỉnh sửa!";
+                    }
+                }
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
                 status = "Fail";
             }
-            if(element.Text.Trim() == "Cập nhật thành công")
-            {
-                ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
-            }
-            else
-            {
-            ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
-            }
+            ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual, intergration);
         }
 
         [Test]
@@ -600,8 +675,16 @@ namespace test_salephone.Tests
             // Ghi kết quả vào file Excel
             ExcelReportHelper_Phuc.WriteToExcel("TestCase Hoàng Phúc", testCaseID, status, actual);
         }
-
-
+        string ImageToBase64(string imagePath)
+        {
+            byte[] imageBytes = File.ReadAllBytes(imagePath);
+            return Convert.ToBase64String(imageBytes);
+        }
+        string GetImageBase64FromElement(IWebDriver driver, string xpath)
+        {
+            string base64Src = driver.FindElement(By.XPath(xpath)).GetAttribute("src");
+            return base64Src.Split(',')[1]; // Loại bỏ "data:image/png;base64,"
+        }
 
         [TearDown]
         public void TearDown()

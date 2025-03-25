@@ -55,6 +55,7 @@ namespace test_salephone.Helpers
         /// <summary>
         /// Parse chuỗi dữ liệu test theo định dạng "Key: Value" trên mỗi dòng,
         /// trả về chuỗi chỉ chứa các giá trị, mỗi giá trị nằm trên một dòng.
+        /// Chỉ lấy dữ liệu trong "" đầu tiên nếu có, với trường image chỉ lấy đường dẫn (không lấy base64).
         /// </summary>
         /// <param name="dataTest">Chuỗi dữ liệu test gốc</param>
         /// <returns>Chuỗi chứa các giá trị sau dấu ':'</returns>
@@ -70,12 +71,45 @@ namespace test_salephone.Helpers
                 var parts = line.Split(new[] { ':' }, 2);
                 if (parts.Length == 2)
                 {
-                    // Lấy phần bên phải và loại bỏ khoảng trắng
+                    // Lấy phần bên phải và loại bỏ khoảng trắng đầu cuối
                     string value = parts[1].Trim();
-                    // Nếu value bắt đầu và kết thúc bằng dấu " thì loại bỏ chúng
-                    if (value.StartsWith("\"") && value.EndsWith("\"") && value.Length >= 2)
+
+                    // Kiểm tra nếu là dòng image
+                    if (line.Trim().StartsWith("image:"))
                     {
-                        value = value.Substring(1, value.Length - 2);
+                        // Tìm vị trí dấu " đầu tiên và dấu " thứ hai
+                        int firstQuote = value.IndexOf('"');
+                        int secondQuote = value.IndexOf('"', firstQuote + 1);
+                        if (firstQuote >= 0 && secondQuote > firstQuote)
+                        {
+                            // Chỉ lấy phần đường dẫn trong dấu ""
+                            value = value.Substring(firstQuote + 1, secondQuote - firstQuote - 1);
+                        }
+                        else
+                        {
+                            value = value.Trim(); // Giữ nguyên nếu không có dấu ""
+                        }
+                    }
+                    else
+                    {
+                        // Xử lý các dòng khác: chỉ lấy phần trong "" nếu có
+                        int firstQuote = value.IndexOf('"');
+                        if (firstQuote >= 0)
+                        {
+                            int secondQuote = value.IndexOf('"', firstQuote + 1);
+                            if (secondQuote > firstQuote)
+                            {
+                                value = value.Substring(firstQuote + 1, secondQuote - firstQuote - 1);
+                            }
+                            else
+                            {
+                                value = value.Substring(firstQuote + 1).Trim();
+                            }
+                        }
+                        else
+                        {
+                            value = value.Trim(); // Giữ nguyên nếu không có dấu ""
+                        }
                     }
                     values.Add(value);
                 }
@@ -83,5 +117,6 @@ namespace test_salephone.Helpers
             // Nối các giá trị với newline
             return string.Join(Environment.NewLine, values);
         }
+
     }
 }
