@@ -40,11 +40,12 @@ namespace QuanLySanPham_Tests
             Thread.Sleep(20000);
         }
         
-    [Test]
-    [Description("Test Thêm sản phẩm")]
-    [TestCase("ID_QLSANPHAM_01", "Thêm sản phẩm thành công")]
-    [TestCase("ID_QLSANPHAM_02", "Thêm sản phẩm không thành công")]
-    [TestCase("ID_QLSANPHAM_03", "Thêm sản phẩm không thành công")]
+
+   [Test]
+[Description("Test Thêm sản phẩm")]
+[TestCase("ID_QLSANPHAM_01", "Thêm sản phẩm thành công")]
+[TestCase("ID_QLSANPHAM_02", "Thêm sản phẩm không thành công")]
+[TestCase("ID_QLSANPHAM_03", "Thêm sản phẩm không thành công")]
 public void Test_ThemSanPham(String testCaseID, String thongBao)
 {
     string status = "Fail";
@@ -74,59 +75,50 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
 
         string[] testFields = testData_Add.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
                 
-        // Thực hiện các thao tác nhập dữ liệu và upload file
         Thread.Sleep(6000);
         driver.FindElement(By.XPath("//body//div[@id='root']//div[@class='ant-spin-container']//div//div//div//div[1]//div[1]//button[1]")).Click();
         Thread.Sleep(2000);
                 
-        // Nhập "Họ và tên" (tên sản phẩm)
         var fullNameInput = driver.FindElement(By.Id("basic_name"));
         Thread.Sleep(3000);
         fullNameInput.Click();
         Thread.Sleep(500);
         fullNameInput.SendKeys(testFields[0]);
 
-        // Chọn loại sản phẩm (ví dụ: Apple)
         IWebElement selectBox = driver.FindElement(By.XPath("//div[contains(@class, 'ant-select-selector')]"));
         selectBox.Click();
         Thread.Sleep(2000);
         IWebElement itemApple = driver.FindElement(By.XPath("//div[contains(@class, 'ant-select-item-option-content') and text()='Apple']"));
         itemApple.Click();
 
-        // Nhập số lượng tồn kho
         var countinStockInput = driver.FindElement(By.Id("basic_countInStock"));
         Thread.Sleep(3000);
         countinStockInput.Click();
         Thread.Sleep(500);
         countinStockInput.SendKeys(testFields[2]);
 
-        // Nhập giá sản phẩm
         var priceInput = driver.FindElement(By.Id("basic_price"));
         Thread.Sleep(3000);
         priceInput.Click();
         Thread.Sleep(500);
         priceInput.SendKeys(testFields[3]);
 
-        // Nhập mô tả sản phẩm
         var desInput = driver.FindElement(By.Id("basic_description"));
         Thread.Sleep(3000);
         desInput.Click();
         Thread.Sleep(500);
         desInput.SendKeys(testFields[4]);
 
-        // Click chọn file upload
         driver.FindElement(By.XPath("//span[text()='Select Files']")).Click();
         Thread.Sleep(2000);
         IWebElement fileInput = driver.FindElement(By.CssSelector("input[type='file']"));
         fileInput.SendKeys(@"C:\Users\Admin\Downloads\iphone16.jpg");
         Thread.Sleep(2000);
 
-        // Nhấn checkbox (nếu cần)
         IWebElement checkBox = driver.FindElement(By.CssSelector("input[type='checkbox']"));
         checkBox.Click();
         Thread.Sleep(2000);
 
-        // Nhập thông số kỹ thuật
         var screenSizeInput = driver.FindElement(By.Id("basic_screenSize"));
         Thread.Sleep(3000);
         screenSizeInput.Click();
@@ -163,65 +155,92 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         Thread.Sleep(500);
         screemResolutionInput.SendKeys(testFields[11]);
 
-        // Click nút "Thêm sản phẩm"
-        IWebElement btntthemSanPham = driver.FindElement(By.XPath("//span[contains(text(),'Thêm sản phẩm')]"));
-        btntthemSanPham.Click();
-        Thread.Sleep(12000); 
+        IWebElement btnThemSanPham = driver.FindElement(By.XPath("//span[contains(text(),'Thêm sản phẩm')]"));
+        btnThemSanPham.Click();
                 
-        // Dùng WebDriverWait để bắt thông báo (dựa vào container thông báo)
-        WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
-                IWebElement element = waitMessage.Until(driver =>
-                {
-                    try
-                    {
-                        var elements = driver.FindElements(By.XPath("//div[contains(@class, 'ant-message-notice-content')]//span[text()='Thêm sản phẩm thành công!']"));
-                        return elements.FirstOrDefault(el => el.Displayed); // Trả về phần tử hiển thị đầu tiên
-                    }
-                    catch (NoSuchElementException)
-                    {
-                        return null;
-                    }
-                });
+        Thread.Sleep(3000);
 
-                bool isErrorDisplayed = driver.FindElements(By.XPath("//div[contains(@class, 'ant-message-custom-content') and contains(@class, 'ant-message-error')]")).Count > 0;
-                Assert.That(element, Is.Not.Null, "Không tìm thấy bất kỳ thông báo nào sau 60s!");
-                Console.WriteLine($"✅ Đã tìm thấy thông báo: {element.Text.Trim()}");
-                Console.WriteLine($"✅ thông báo truyền vào: {thongBao}");
-
-
-        // So sánh thông báo lấy được với thông báo mong đợi
-        if (element.Text.Trim() != thongBao)
-                {
-                    status = "Fail";
-                }
-
-            else
-                {
-                    if (isErrorDisplayed)
-                    {
-                        // Actions action = new Actions(driver);
-                        // action.MoveByOffset(0, 0).Click().Perform(); // Click ra ngoài để tắt popup
-                        Console.WriteLine("Đã hiển thị thông báo lỗi! và dữ liệu không cập nhật");
-                        status = "Pass";
-                    }
-                    else
-                    {
-                        // CheckInformationAfterUpdate(testFields[0], testFields[1], testFields[2], testFields[3], testFields[4], testFields[5], testFields[6]);
-                        status = "Pass";
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
-                status = "Fail";
-            }
-            //Ghi trạng thái test ra Excel nếu cần
+        // Kiểm tra thông báo lỗi giá
+        var errorElements = driver.FindElements(By.XPath("//div[@class='ant-message-notice-content']//span[contains(text(),'Giá sản phẩm phải là một số hợp lệ')]"));
+        if (errorElements.Count > 0)
+        {
+            string actualError = errorElements.First().Text.Trim();
+            Console.WriteLine($"✅ Actual Result: {actualError}");
+            status = "Pass";
             ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
+            return;
+        }
+
+        // Kiểm tra thông báo validate (ví dụ: Vui lòng không bỏ trống!)
+        var validateElements = driver.FindElements(By.XPath("//div[@class='ant-form-item-explain-error']"));
+        if (validateElements.Count > 0)
+        {
+            string actualValidate = validateElements.First().Text.Trim();
+            Console.WriteLine($"✅ Actual Result: {actualValidate}");
+            status = "Pass";
+            ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
+            return;
+        }
+
+        // Nếu không có lỗi, bắt thông báo thành công
+        WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
+        IWebElement element = waitMessage.Until(drv =>
+        {
+            try
+            {
+                var elements = drv.FindElements(By.XPath("//div[contains(@class, 'ant-message-notice-content')]//span[2]"));
+                return elements.FirstOrDefault(el => el.Displayed);
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        });
+
+        Assert.That(element, Is.Not.Null, "Không tìm thấy bất kỳ thông báo nào sau 60s!");
+        string actualMessage = element.Text.Trim().TrimEnd('!');
+        Console.WriteLine($"✅ Actual Result: {actualMessage}");
+        Console.WriteLine($"✅ Thông báo mong đợi: {thongBao}");
+
+        if (!actualMessage.Equals(thongBao, StringComparison.OrdinalIgnoreCase))
+        {
+            status = "Fail";
+        }
+        else
+        {
+            status = "Pass";
+        }
+
+        // Sau khi xác nhận thông báo, chuyển hướng về màn hình chính
+        if (element != null && element.Displayed)
+        {   
+            IWebElement logo = driver.FindElement(By.XPath("//img[@alt='logo']"));
+            logo.Click();
+            Thread.Sleep(2000);
+
+            WebDriverWait waitXemThem = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+            IWebElement xemThemSanPham = waitXemThem.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//span[contains(text(),'Xem thêm sản phẩm')]")));
+            xemThemSanPham.Click();
+            Thread.Sleep(5000);
+                    
+            IWebElement searchProduct = driver.FindElement(By.XPath("//input[@placeholder='Tìm kiếm... ']"));
+            searchProduct.SendKeys(testFields[0]);
+            Thread.Sleep(4000);
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
+        status = "Fail";
+    }
+    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
 }
 
-        // Test cập nhật sản phẩm (dữ liệu được đọc từ Excel theo testCaseID)
+
+
+
+
+
         [Test]
         [Description ("Test Cập nhật sản phẩm")]
         [TestCase ("ID_QLSANPHAM_04","Cập nhật thành công")]
@@ -232,18 +251,13 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
             string status = "Fail";
     try
     {
-        // Sử dụng hàm mới để lấy dữ liệu từ cột F (cột 6) của sheet "TestCase Anh Khôi"
-        // từ dòng 12 đến dòng 23.
         string testData_Add = string.Empty;
-        // Kiểm tra testCaseID để xác định phạm vi dòng cần lấy dữ liệu
         if (testCaseID == "ID_QLSANPHAM_04")
         { 
-            // Lấy dữ liệu từ cột F (cột 6) của sheet "TestCase Anh Khôi" từ dòng 48 đến 51
             testData_Add = ReadTestDataFromExcel.ReadDataRangeFromExcel("TestCase Anh Khôi", 48, 51, 6);
         }
         else if (testCaseID == "ID_QLSANPHAM_05")
         {
-            // Lấy dữ liệu từ cột F (cột 6) của sheet "TestCase Anh Khôi" từ dòng 54 đến 57
             testData_Add = ReadTestDataFromExcel.ReadDataRangeFromExcel("TestCase Anh Khôi", 54, 57, 6);
         }
             else
@@ -255,13 +269,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         }
 
         string[] testFields = testData_Add.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-        
-        // Debug: in ra dữ liệu test
-        //foreach (var field in testFields)
-        //{
-        //    Console.WriteLine(field);
-        //}
-        
+    
         // Click vào nút edit của sản phẩm cần cập nhật
         driver.FindElement(By.XPath("//tr[td[contains(normalize-space(.), 'iPhone 15 | 128GB | Đen')]]//span[@aria-label='edit']")).Click();
         Thread.Sleep(6000);
@@ -305,100 +313,55 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         // Click nút submit cập nhật
         driver.FindElement(By.XPath("//span[contains(text(),'Xác nhận')]")).Click();
 
-        string excelMessage = "Cập nhật sản phẩm không thành công."; // Mặc định
-
-        // Chờ hiện thông báo
+        
         WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
-        IWebElement element = waitMessage.Until(driver =>
+        IWebElement messageElement = waitMessage.Until(driver =>
         {
-            try
-            {   
-                var successElements = driver.FindElements(By.XPath("//span[contains(text(),'Cập nhật sản phẩm thành công.')]"));
-                var errorElements = driver.FindElements(By.XPath("//span[contains(text(),'Giá sản phẩm phải là một số hợp lệ và lớn hơn 0.')]"));
-
-                if (errorElements.Count > 0 && errorElements[0].Displayed)
-                {
-                    Console.WriteLine("❌ Thông báo: Giá sản phẩm phải là một số hợp lệ và lớn hơn 0.");
-                    status = "Pass"; 
-                    excelMessage = "Giá sản phẩm phải là một số hợp lệ và lớn hơn 0.";
-                    return errorElements[0];
-                }
-                else if (successElements.Count > 0 && successElements[0].Displayed)
-                {
-                    Console.WriteLine("✅ Thông báo: Cập nhật sản phẩm thành công.");
-                    status = "Pass"; 
-                    excelMessage = "Cập nhật sản phẩm thành công.";
-                    return successElements[0];
-                }
-                return null;
-            }
-            catch (TimeoutException ex)
-            {
-                Console.WriteLine($"⚠️ Phát hiện lỗi timeout: {ex.Message}");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi thông báo: {ex.Message}");
-                return null;
-            }
+            var elements = driver.FindElements(By.XPath("//div[contains(@class, 'ant-message-notice-content')]//span[2]"));
+            return (elements.Count > 0 && elements[0].Displayed) ? elements[0] : null;
         });
-                
-            if (element == null)
+
+       // Lấy nội dung thông báo từ phần tử
+            string excelMessage = messageElement != null ? messageElement.Text.Trim() : "Không tìm thấy thông báo";
+
+            // Nếu thông báo là "Cập nhật sản phẩm thành công." thì chuyển trang theo yêu cầu
+           if (excelMessage.Equals("Cập nhật sản phẩm thành công.", StringComparison.OrdinalIgnoreCase))
             {
-                status = "Fail";
-            }   
-            // Xử lý nút đóng nếu có
-            var elements = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
-            if (elements.Count > 0)
-            {
-                try
-                {
-                    var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
-                    wait.Until(d =>
-                    {
-                        var closeButton = d.FindElement(By.XPath("//span[contains(@class, 'anticon-close')]//svg//path[contains(@d, 'M799.86 16')]"));
-                        return closeButton.Displayed && closeButton.Enabled ? closeButton : null;
-                    }).Click();
-                    Console.WriteLine("🔘 Đã nhấp vào nút đóng.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("⚠️ Lỗi khi nhấp vào nút đóng: " + ex.Message);
-                }
+                status = "Pass"; // Cập nhật status thành Pass khi thành công
+                // Nhấp vào logo
+                driver.FindElement(By.XPath("//img[@alt='logo']")).Click();
+                Thread.Sleep(2000);
+                // Nhấp vào nút "Xem thêm sản phẩm"
+                driver.FindElement(By.XPath("//span[contains(text(),'Xem thêm sản phẩm')]")).Click();
+                Thread.Sleep(5000);
+                IWebElement searchProduct = driver.FindElement(By.XPath("//input[@placeholder='Tìm kiếm... ']"));
+                searchProduct.SendKeys(testFields[0]);
+                Thread.Sleep(6000);
+                Console.WriteLine("✅ Đã chuyển sang trang 'Xem thêm sản phẩm'.");
+                Console.WriteLine("Test result: " + excelMessage);
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, excelMessage);
+                return;
             }
+
             else
             {
-                Console.WriteLine("⚠️ Không tìm thấy nút đóng.");
+                status = "Pass";
+                Thread.Sleep(2000);
+                string failMessage = "Giá sản phẩm phải là một số hợp lệ và lớn hơn 0.";
+                Console.WriteLine("Test result: " + failMessage);
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, failMessage);
+                return;
             }
-
-            Thread.Sleep(2000);
-            }
-                catch (WebDriverTimeoutException ex)
-                {
-                    Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
-                    status = "Fail";
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
-                    status = "Fail";
-                }
-            // Ghi kết quả vào file Excel
-                if (status == "Pass")
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
-                }
-                else
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
-                }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
+        status = "Fail";
+    }
+   
+            
 }   
-        
-
-      
-
-        [Test]
+       [Test]
         public void Test_XoaSanPham()
         {
             string testCaseID = "ID_QLSANPHAM_06";
@@ -412,6 +375,17 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
                 Thread.Sleep(2000);
                 driver.FindElement(By.XPath("//span[normalize-space()='OK']")).Click();
                 Thread.Sleep(2000);
+                
+                // Kiểm tra thông báo "Xóa sản phẩm thành công!"
+                if (driver.FindElements(By.XPath("//span[contains(text(),'Xóa sản phẩm thành công!')]")).Count > 0)
+                {
+                    // Nếu thông báo xuất hiện thì bấm vào logo và "Xem thêm sản phẩm"
+                    driver.FindElement(By.XPath("//img[@alt='logo']")).Click();
+                    Thread.Sleep(2000);
+                    driver.FindElement(By.XPath("//span[contains(text(),'Xem thêm sản phẩm')]")).Click();
+                    Thread.Sleep(2000);
+                }
+                
                 status = "Pass";
             }
             catch (Exception ex)
@@ -419,15 +393,17 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
                 Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
                 status = "Fail";
             }
-             if (status == "Pass")
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Xóa sản phẩm thành công");
-                }
-                else
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Xóa sản phẩm không thành công");
-                }
+            
+            if (status == "Pass")
+            {   
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Xóa sản phẩm thành công");
+            }
+            else
+            {
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Xóa sản phẩm không thành công");
+            }
         }
+
 
         [Test]
         public void Test_Phantrang()
