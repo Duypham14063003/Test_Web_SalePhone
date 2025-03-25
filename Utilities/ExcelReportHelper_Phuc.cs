@@ -32,11 +32,7 @@ namespace test_salephone.Helpers
                     }
                     if (intergration != null)
                     {
-                        cellValue += (cellValue != "" ? "\n" : "") + $"Thông tin trên web:\n {intergration}";
-                    }
-                    else if (intergration == null)
-                    {
-                        cellValue += (cellValue != "" ? "\n" : "") + $"Hệ thống không cập nhật lại thông tin";
+                        cellValue += (cellValue != "" ? "\n" : "") + $"{intergration}";
                     }
                     worksheet.Cell(rowIndex, 9).Value = cellValue;
                     worksheet.Cell(rowIndex, 9).Style.Alignment.SetWrapText(true); // Bật chế độ xuống dòng

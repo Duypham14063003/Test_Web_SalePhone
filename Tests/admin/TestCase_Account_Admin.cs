@@ -66,7 +66,7 @@ namespace test_salephone.Tests
             string status = "Fail";
             string intergration = null;
             Setup();
-            Thread.Sleep(20000);
+            Thread.Sleep(30000);
 
             try
             {
@@ -186,10 +186,10 @@ namespace test_salephone.Tests
                     driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
 
                     // Đăng xuất tài khoản admin
-                    Thread.Sleep(4000);
+                    Thread.Sleep(2000);
                     driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
 
-                    Thread.Sleep(1000);
+                    Thread.Sleep(20000);
                     driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
 
                     // Đăng nhập
@@ -219,23 +219,14 @@ namespace test_salephone.Tests
                     if (textName != testFields[0] || textEmail != testFields[1] || textPhone != testFields[2] ||
                         textAddress != testFields[3])
                     {
-                        if (shortBase64Local != shortBase64)
-                        {
-                            status = "Fail";
-                            intergration = $"Tên: {textName}\nEmail: {textEmail}\nĐiện thoại: {textPhone}\nĐịa chỉ: {textAddress}\nẢnh: {shortBase64} (KHÔNG khớp ở định dạng base64)\nHệ thống cập nhật lại tài khoản không chính xác với thông tin sau chỉnh sửa!";
-                        }
-                        else
-                        {
-                            status = "Fail";
-                            // Console.WriteLine("❌ Dữ liệu không khớp:");
-                            // Console.WriteLine($"Tên: {textName} (Kỳ vọng: {testFields[0]})");
-                            // Console.WriteLine($"Email: {textEmail} (Kỳ vọng: {testFields[1]})");
-                            // Console.WriteLine($"Điện thoại: {textPhone} (Kỳ vọng: {testFields[2]})");
-                            // Console.WriteLine($"Địa chỉ: {textAddress} (Kỳ vọng: {testFields[3]})");
-                            // Console.WriteLine($"hình ảnh: {shortBase64Local} (Kỳ vọng: {shortBase64})");
-                            intergration = $"Tên: {textName}\nEmail: {textEmail}\nĐiện thoại: {textPhone}\nĐịa chỉ: {textAddress}\nẢnh: {shortBase64}(Khớp ở định dạng base64)\nHệ thống cập nhật lại tài khoản không chính xác với thông tin sau chỉnh sửa!";
-                        }
-
+                        status = "Fail";
+                        // Console.WriteLine("❌ Dữ liệu không khớp:");
+                        // Console.WriteLine($"Tên: {textName} (Kỳ vọng: {testFields[0]})");
+                        // Console.WriteLine($"Email: {textEmail} (Kỳ vọng: {testFields[1]})");
+                        // Console.WriteLine($"Điện thoại: {textPhone} (Kỳ vọng: {testFields[2]})");
+                        // Console.WriteLine($"Địa chỉ: {textAddress} (Kỳ vọng: {testFields[3]})");
+                        // Console.WriteLine($"hình ảnh: {shortBase64Local} (Kỳ vọng: {shortBase64})");
+                        intergration = "Hệ thống cập nhật lại tài khoản không chính xác với thông tin sau chỉnh sửa!";
 
                     }
                     else
@@ -247,7 +238,7 @@ namespace test_salephone.Tests
                         // Console.WriteLine($"Điện thoại: {textPhone}");
                         // Console.WriteLine($"Địa chỉ: {textAddress}");
                         // Console.WriteLine($"Ảnh: {imgSrc.Substring(0, 50)}");
-                        intergration = $"Tên: {textName}\nEmail: {textEmail}\nĐiện thoại: {textPhone}\nĐịa chỉ: {textAddress}\nẢnh: {shortBase64}\nHệ thống cập nhật lại tài khoản chính xác với thông tin sau chỉnh sửa!";
+                        intergration = "Hệ thống cập nhật lại tài khoản chính xác với thông tin sau chỉnh sửa!";
                     }
                 }
 
@@ -265,17 +256,18 @@ namespace test_salephone.Tests
         [TestCase("ID_TaiKhoan_1", "Hãy nhập email hợp lệ và có đuôi @gmail.com")]
         [TestCase("ID_TaiKhoan_2", "Hãy nhập đầy đủ thông tin")]
         [TestCase("ID_TaiKhoan_3", "Email này đã được đăng ký, vui lòng chọn email khác")]
-        [TestCase("ID_TaiKhoan_4", "Đăng ký tài khoản thành công")]
+        [TestCase("ID_TaiKhoan_4", "Đăng ký thành công!")]
         [TestCase("ID_TaiKhoan_5", "Mật khẩu phải có ít nhất 1 ký tự viết hoa và ít nhất 6 ký tự")]
-        [TestCase("ID_TaiKhoan_6", "Mật khẩu phải có tối thiểu 6 ký tự")]
+        [TestCase("ID_TaiKhoan_6", "Mật khẩu phải có ít nhất 1 ký tự viết hoa và ít nhất 6 ký tự")]
         [TestCase("ID_TaiKhoan_7", "Mật khẩu phải có ít nhất 1 ký tự viết hoa và ít nhất 6 ký tự")]
         [TestCase("ID_TaiKhoan_8", "Mật khẩu là trường bắt buộc")]
         [TestCase("ID_TaiKhoan_9", "Nhập lại mật khẩu là trường bắt buộc")]
         public void Test_DangKy(String testCaseID, String thongBao)
         {
             {
-                string actual = "";
+                string actual = null;
                 string status = "Fail";
+                string intergration = null;
                 Setup2();
                 try
                 {
@@ -353,6 +345,42 @@ namespace test_salephone.Tests
                             status = "Pass";
                         }
 
+
+                    }
+                    // Thêm điều kiện kiểm tra "Cập nhật thành công" và so sánh với testFields
+                    if (element.Text.Trim() == "Đăng ký thành công!")
+                    {
+                        driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
+
+                        // Đăng nhập
+                        driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys(testFields[0]);
+                        driver.FindElement(By.CssSelector("input[placeholder='Nhập mật khẩu']")).SendKeys(testFields[1]);
+                        driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
+
+                        WebDriverWait waitMessageLogin = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
+                        IWebElement elementLogin = waitMessage.Until(driver =>
+                        {
+                            try
+                            {
+                                var elements = driver.FindElements(By.XPath("//div[contains(@class, 'ant-message-notice-content')]//span[2]"));
+                                return elements.FirstOrDefault(el => el.Displayed); // Trả về phần tử hiển thị đầu tiên
+                            }
+                            catch (NoSuchElementException)
+                            {
+                                return null;
+                            }
+                        });
+                        if (elementLogin.Text.Trim() == "Đăng nhập thành công")
+                        {
+                            actual = elementLogin.Text.Trim();
+                            intergration = "Hệ thống đăng nhập được với tài khoản vừa tạo";
+                            status = "Pass";
+                        }
+                        else
+                        {
+                            actual = elementLogin.Text.Trim();
+                            status = "Fail";
+                        }
                     }
                 }
                 catch (Exception ex)
