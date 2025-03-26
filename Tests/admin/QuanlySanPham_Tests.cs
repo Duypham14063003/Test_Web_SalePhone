@@ -113,7 +113,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         driver.FindElement(By.XPath("//span[text()='Select Files']")).Click();
         Thread.Sleep(2000);
         IWebElement fileInput = driver.FindElement(By.CssSelector("input[type='file']"));
-        fileInput.SendKeys(@"C:\\Users\\Admin\\Downloads\\iphone16.jpg");
+        fileInput.SendKeys(testFields[5]);
         Thread.Sleep(2000);
 
         IWebElement checkBox = driver.FindElement(By.CssSelector("input[type='checkbox']"));
@@ -238,7 +238,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         Console.WriteLine($"⚠️ Phát hiện lỗi: {ex.Message}");
         status = "Fail";
     }
-    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
+    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status,"Thêm sản phẩm thành công");
 }
 
 
