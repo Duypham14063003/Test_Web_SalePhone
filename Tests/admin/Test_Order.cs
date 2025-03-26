@@ -4,11 +4,12 @@ using test_salephone.Helpers;
 using OpenQA.Selenium.Support.UI;
 using test_salephone.Utilities;
 using System.Text.RegularExpressions;
+using SeleniumExtras.WaitHelpers;
 
 namespace test_salephone.Tests
 {
     [TestFixture]
-    public class Order
+    public class Test_Order
     {
         private IWebDriver driver;
         private IWebElement element;
@@ -24,7 +25,7 @@ namespace test_salephone.Tests
             driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys("sela@gmail.com");
             driver.FindElement(By.CssSelector("input[placeholder='Nhập mật khẩu']")).SendKeys("123456");
             driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
-            Thread.Sleep(3000);
+            Thread.Sleep(5000);
             driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
 
             //Vào trang quản lý người dùng
@@ -37,12 +38,14 @@ namespace test_salephone.Tests
         }
 
         [Test]
-        [Description("Test Kiểm tra giao diện đơn hàng")]
+        [Description("Test Kiểm tra giao diện và số lượng đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_01", "Giao diện hiển thị đầy đủ")]
-        [TestCase("ID_Order_02", "Giao diện hiển thị đầy đủ khi có 1 đơn hàng")]
-        [TestCase("ID_Order_03", "Không có đơn nào ")]
-        public void Test_ViewOrder(String testCaseID, String thongBao)
+        [TestCase("ID_Order_01", "Giao diện hiển thị đầy đủ", TestName = "ID_Order_01")]
+        [TestCase("ID_Order_02", "Giao diện hiển thị đầy đủ khi có 1 đơn hàng", TestName = "ID_Order_02")]
+        [TestCase("ID_Order_03", "Không có đơn nào trong danh sách", TestName = "ID_Order_03")]
+        [TestCase("ID_Order_04", "Đơn hàng hiển thị đúng với dữ liệu", TestName = "ID_Order_04")]
+        [TestCase("ID_Order_05", "Hiển thị đúng danh sách sản phẩm trong đơn hàng", TestName = "ID_Order_05")]
+        public void Test_ViewAndVerifyOrder(String testCaseID, String thongBao)
         {
             string status = "Fail";
             try
@@ -58,338 +61,109 @@ namespace test_salephone.Tests
 
                 WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
-                // Kiểm tra xem danh sách đơn hàng có hiển thị không
-                IWebElement orderList = wait.Until(d => d.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]")));
-                if (orderList.Displayed)
+                //Kiểm tra giao diện đơn hàng
+                if (testCaseID.StartsWith("ID_Order_01") || testCaseID.StartsWith("ID_Order_02") || testCaseID.StartsWith("ID_Order_03"))
                 {
-                    Console.WriteLine("✅ Giao diện hiển thị danh sách đơn hàng đầy đủ");
-                    status = "Pass";
-                }
-                else
-                {
-                    Console.WriteLine("❌ Không tìm thấy danh sách đơn hàng");
-                }
-                
-                // Đóng cửa sổ nếu có nút đóng
-                var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
-                if (closeButton.Count > 0)
-                {
-                    closeButton[0].Click();
-                    Console.WriteLine("✅ Đã nhấp vào nút đóng.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
-            }
-
-            //Ghi trạng thái test ra Excel nếu cần
-            string testResultMessage = thongBao;
-            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
-        }
-
-        [Test]
-        [Description("Test Kiểm tra giao diện đơn hàng")]
-        [Category("Order Management")]
-        [TestCase("ID_Order_04", "Đơn hàng hiển thị đúng với dữ liệu")]
-        public void Test_VerifyOrderQuantity(String testCaseID, String thongBao)
-        {
-            string status = "Fail";
-            try
-            {
-                // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
-                if (string.IsNullOrEmpty(dataTest))
-                {
-                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
-                    return;
-                }
-
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-
-                //Lấy số lượng đơn hàng từ tiêu đề (Ví dụ: "Tổng số lượng đơn hàng: 113")
-                string totalOrderText = driver.FindElement(By.XPath("//div[contains(text(),'Tổng số lượng đơn hàng')]")).Text;
-                string[] parts = totalOrderText.Split(':');
-
-                if (parts.Length < 2 || string.IsNullOrWhiteSpace(parts[1]))
-                {
-                    throw new Exception("⚠️ LỖI: Không lấy được số lượng đơn hàng!");
-                }
-
-                if (!int.TryParse(parts[1].Trim(), out int totalOrderCount))
-                {
-                    throw new Exception($"⚠️ LỖI: Giá trị '{parts[1].Trim()}' không phải số hợp lệ!");
-                }
-                Console.WriteLine($"📌 Tổng số lượng đơn hàng hiển thị: {totalOrderCount}");
-
-                //Đếm số lượng đơn hàng thực tế bằng cách duyệt qua từng trang
-                int actualOrderCount = 0;
-
-                while (true)
-                {
-                    // Kiểm tra trang hiện tại để debug
-                    var currentPage = driver.FindElement(By.XPath("//li[contains(@class,'ant-pagination-item-active')]")).Text;
-                    Console.WriteLine($"📌 Đang ở trang: {currentPage}");
-
-                    // Đếm số đơn hàng trên trang hiện tại
-                    List<IWebElement> orderRows = driver.FindElements(By.XPath("//tr[contains(@class, 'ant-table-row')]")).ToList();
-                    actualOrderCount += orderRows.Count;
-
-                    // Kiểm tra xem có thể bấm Next không
-                    var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
-                    
-                    if (nextPageButton.Count > 0)
+                    IWebElement orderList = wait.Until(d => d.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]")));
+                    if (orderList.Displayed)
                     {
-                        Console.WriteLine("📌 Chuyển sang trang tiếp theo...");
-                        nextPageButton[0].Click();
-
-                        // Đợi trang tải xong
-                        // WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
-                        // wait.Until(drv => drv.FindElement(By.XPath("//table//tbody//tr")));
-
-                        Thread.Sleep(1000); // Chờ thêm 1s để tránh lỗi hiển thị chậm
+                        Console.WriteLine("✅ Giao diện hiển thị danh sách đơn hàng đầy đủ");
+                        status = "Pass";
                     }
                     else
                     {
-                        Console.WriteLine("✅ Đã duyệt hết tất cả các trang.");
-                        break; // Thoát vòng lặp khi không còn nút Next
+                        Console.WriteLine("❌ Không tìm thấy danh sách đơn hàng");
+                        status = "Fail";
                     }
                 }
 
-
-                Console.WriteLine($"📌 Số đơn hàng thực tế sau khi duyệt tất cả trang: {actualOrderCount}");
-
-                // So sánh hai số và in kết quả
-                if (totalOrderCount == actualOrderCount)
+                //Kiểm tra số lượng đơn hàng
+                if (testCaseID.StartsWith("ID_Order_04"))
                 {
-                    Console.WriteLine("✅ Dữ liệu đúng: Số lượng đơn hàng hiển thị khớp với số đơn hàng thực tế.");
-                    status = "Pass";
-                }
-                else
-                {
-                    Console.WriteLine($"❌ LỖI: Số đơn hàng hiển thị ({totalOrderCount}) KHÔNG khớp với số đơn hàng thực tế ({actualOrderCount}).");
-                }
-                
-                // Đóng cửa sổ nếu có nút đóng
-                var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
-                if (closeButton.Count > 0)
-                {
-                    closeButton[0].Click();
-                    Console.WriteLine("✅ Đã nhấp vào nút đóng.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
-            }
+                    Thread.Sleep(5000);
+                    string totalOrderText = driver.FindElement(By.XPath("//div[contains(text(),'Tổng số lượng đơn hàng')]")).Text;
+                    string[] parts = totalOrderText.Split(':');
+                    Thread.Sleep(5000);
 
-            //Ghi trạng thái test ra Excel nếu cần
-            string testResultMessage = thongBao;
-            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
-        }
-
-        [Test]
-        [Description("Test Kiểm tra giao diện đơn hàng")]
-        [Category("Order Management")]
-        [TestCase("ID_Order_05", "Hiển thị đúng danh sách sản phẩm trong đơn hàng")]
-        public void Test_ManyproductsinOrder(String testCaseID, String thongBao)
-        {
-            string status = "Fail";
-            try
-            {
-                // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
-                if (string.IsNullOrEmpty(dataTest))
-                {
-                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
-                    return;
-                }
-
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-
-                // Chọn đơn hàng đầu tiên để mở chi tiết
-                driver.FindElement(By.XPath("//button[@type='button' and @class='ant-table-row-expand-icon ant-table-row-expand-icon-collapsed' and @aria-label='Expand row' and @aria-expanded='false']")).Click();
-                Thread.Sleep(3000); 
-
-                // Lấy danh sách sản phẩm trong chi tiết đơn hàng
-                var productElements = driver.FindElements(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[3]/td/div/div/div[2]"));
-                List<string> displayedProducts = productElements.Select(el => el.Text.Trim()).ToList();
-
-                // In danh sách sản phẩm ra console
-                Console.WriteLine("Danh sách sản phẩm hiển thị trong đơn hàng:");
-                displayedProducts.ForEach(product => Console.WriteLine($"- {product}"));
-
-                // Kiểm tra danh sách không rỗng
-                if (displayedProducts.Count > 0)
-                {
-                    Console.WriteLine("Danh sách sản phẩm hiển thị đúng.");
-                    status = "Pass";
-                }
-                else
-                {
-                    Console.WriteLine("LỖI: Không có sản phẩm nào hiển thị trong đơn hàng!");
-                }
-                
-                // Đóng cửa sổ nếu có nút đóng
-                var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
-                if (closeButton.Count > 0)
-                {
-                    closeButton[0].Click();
-                    Console.WriteLine("✅ Đã nhấp vào nút đóng.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
-            }
-
-            //Ghi trạng thái test ra Excel nếu cần
-            string testResultMessage = thongBao;
-            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
-        }
-
-        [Test]
-        [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
-        [Category("Order Management")]
-        [TestCase("ID_Order_06", "Trạng thái tình trạng đơn hàng được cập nhật thành công")]
-        public void Test_Update_StatusOrder(String testCaseID, String thongBao)
-        {
-            string status = "Fail";
-            IWebElement orderRow = null;
-            try
-            {
-                // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
-                if (string.IsNullOrEmpty(dataTest))
-                {
-                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
-                    return;
-                }
-
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-
-                // Tìm đơn hàng có trạng thái "Đang xử lý", duyệt qua các trang nếu cần
-                while (true)
-                {
-                    try
+                    if (parts.Length < 2 || string.IsNullOrWhiteSpace(parts[1]))
                     {
-                        orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang xử lý']"));
-                        if (orderRow != null)
-                        {
-                            Console.WriteLine("✅ Tìm thấy đơn hàng 'Đang xử lý'");
-                            break;
-                        }
+                        throw new Exception("⚠️ LỖI: Không lấy được số lượng đơn hàng!");
                     }
-                    catch (NoSuchElementException)
+
+                    if (!int.TryParse(parts[1].Trim(), out int totalOrderCount))
                     {
-                        // Kiểm tra nút next có khả dụng không
+                        throw new Exception($"⚠️ LỖI: Giá trị '{parts[1].Trim()}' không phải số hợp lệ!");
+                    }
+                    Console.WriteLine($"📌 Tổng số lượng đơn hàng hiển thị: {totalOrderCount}");
+
+                    int actualOrderCount = 0;
+                    while (true)
+                    {
+                        var currentPage = driver.FindElement(By.XPath("//li[contains(@class,'ant-pagination-item-active')]")).Text;
+                        Console.WriteLine($"📌 Đang ở trang: {currentPage}");
+
+                        List<IWebElement> orderRows = driver.FindElements(By.XPath("//tr[contains(@class, 'ant-table-row')]")).ToList();
+                        actualOrderCount += orderRows.Count;
+
                         var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
                         if (nextPageButton.Count > 0)
                         {
-                            Console.WriteLine("📌 Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+                            Console.WriteLine("📌 Chuyển sang trang tiếp theo...");
                             nextPageButton[0].Click();
-                            Thread.Sleep(2000);
+                            Thread.Sleep(1000);
                         }
                         else
                         {
-                            Console.WriteLine("❌ Không có đơn hàng 'Đang xử lý' trên tất cả các trang.");
-                            return;
-                        }
-                    }
-                }
-
-                // Nhấn vào trạng thái "Đang xử lý" để mở dropdown
-                var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Đang xử lý']")); 
-                statusButton.Click();
-                Thread.Sleep(1000);
-
-                // Chọn "Đang giao hàng" từ danh sách dropdown
-                driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đang giao hàng']"))?.Click();
-                status = "Pass";
-                Thread.Sleep(1000);
-                
-                // Đóng cửa sổ nếu có nút đóng
-                var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
-                if (closeButton.Count > 0)
-                {
-                    closeButton[0].Click();
-                    Console.WriteLine("✅ Đã nhấp vào nút đóng.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
-            }
-
-            //Ghi trạng thái test ra Excel nếu cần
-            string testResultMessage = thongBao;
-            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
-        }
-
-        [Test]
-        [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
-        [Category("Order Management")]
-        [TestCase("ID_Order_07", "Trạng thái thanh toán đơn hàng được cập nhật thành công")]
-        public void Test_Update_PaymentOrder(String testCaseID, String thongBao)
-        {
-            string status = "Fail";
-            IWebElement orderRow = null;
-            try
-            {
-                // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
-                if (string.IsNullOrEmpty(dataTest))
-                {
-                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
-                    return;
-                }
-
-                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-
-                // Tìm đơn hàng có trạng thái "Chưa thanh toán", duyệt qua các trang nếu cần
-                while (true)
-                {
-                    try
-                    {
-                        orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']"));
-                        if (orderRow != null)
-                        {
-                            Console.WriteLine("✅ Tìm thấy đơn hàng 'Chưa thanh toán'");
+                            Console.WriteLine("✅ Đã duyệt hết tất cả các trang.");
                             break;
                         }
                     }
-                    catch (NoSuchElementException)
+
+                    Console.WriteLine($"📌 Số đơn hàng thực tế sau khi duyệt tất cả trang: {actualOrderCount}");
+
+                    if (totalOrderCount == actualOrderCount)
                     {
-                        // Kiểm tra nút next có khả dụng không
-                        var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
-                        if (nextPageButton.Count > 0)
-                        {
-                            Console.WriteLine("📌 Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
-                            nextPageButton[0].Click();
-                            Thread.Sleep(2000);
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ Không có đơn hàng 'Đang xử lý' trên tất cả các trang.");
-                            return;
-                        }
+                        Console.WriteLine("✅ Dữ liệu đúng: Số lượng đơn hàng hiển thị khớp với số đơn hàng thực tế.");
+                        status = "Pass";
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ LỖI: Số đơn hàng hiển thị ({totalOrderCount}) KHÔNG khớp với số đơn hàng thực tế ({actualOrderCount}).");
+                        status = "Fail";
+                        thongBao = "Đơn hàng hiển thị sai dữ liệu";
                     }
                 }
 
-                // Nhấn vào trạng thái "Chưa thanh toán" để mở dropdown
-                var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']")); 
-                statusButton.Click();
-                Thread.Sleep(1000);
+                //Kiểm tra giao diện đơn hàng
+                if (testCaseID.StartsWith("ID_Order_05"))
+                {
+                    IWebElement orderList = wait.Until(d => d.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]")));
+                    // Chọn đơn hàng đầu tiên để mở chi tiết
+                    driver.FindElement(By.XPath("//button[@type='button' and @class='ant-table-row-expand-icon ant-table-row-expand-icon-collapsed' and @aria-label='Expand row' and @aria-expanded='false']")).Click();
+                    Thread.Sleep(3000); 
 
-                // Chọn "Đã thanh toán" từ danh sách dropdown
-                driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã thanh toán']"))?.Click();
-                status = "Pass";
-                Thread.Sleep(1000);
-                
+                    // Lấy danh sách sản phẩm trong chi tiết đơn hàng
+                    var productElements = driver.FindElements(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[3]/td/div/div/div[2]"));
+                    List<string> displayedProducts = productElements.Select(el => el.Text.Trim()).ToList();
+
+                    // In danh sách sản phẩm ra console
+                    Console.WriteLine("Danh sách sản phẩm hiển thị trong đơn hàng:");
+                    displayedProducts.ForEach(product => Console.WriteLine($"- {product}"));
+
+                    // Kiểm tra danh sách không rỗng
+                    if (displayedProducts.Count > 0)
+                    {
+                        Console.WriteLine("Danh sách sản phẩm hiển thị đúng.");
+                        status = "Pass";
+                    }
+                    else
+                    {
+                        Console.WriteLine("LỖI: Không có sản phẩm nào hiển thị trong đơn hàng!");
+                        status = "Fail";
+                        thongBao = "Không có sản phẩm nào trong đơn hàng";
+                    }
+                }
+
                 // Đóng cửa sổ nếu có nút đóng
                 var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
                 if (closeButton.Count > 0)
@@ -403,7 +177,7 @@ namespace test_salephone.Tests
                 Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
             }
 
-            //Ghi trạng thái test ra Excel nếu cần
+            // Ghi trạng thái test ra Excel nếu cần
             string testResultMessage = thongBao;
             ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
         }
@@ -411,11 +185,11 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_08", new string[] {
+        [TestCase("ID_Order_06", new string[] {
             "Popup (dropdown) xuất hiện ngay bên dưới trạng thái hiện tại",
             "popup hiển thị đầy đủ các trạng thái",
             "Đơn hàng được cập nhật đúng khi chọn trạng thái mới",
-            "Trạng thái không thay đổi khi nhấp ngoài popup"})]
+            "Trạng thái không thay đổi khi nhấp ngoài popup"}, TestName = "ID_Order_06")]
         public void Test_Popup_StatusOrder(String testCaseID, string[] thongBaoList)
         {
             string status = "Fail";
@@ -510,7 +284,9 @@ namespace test_salephone.Tests
                 bodyElement.Click();
                 Console.WriteLine("🖱️ Đã nhấp ra ngoài popup.");
                 Thread.Sleep(2000);
-                if (!statusButton.Displayed)
+                bool isPopupClosed = driver.FindElements(By.XPath("//div[contains(@class, 'ant-dropdown')]")).Count == 0;
+
+                if (isPopupClosed)
                     Console.WriteLine("✅ Popup đã đóng đúng cách.");
                 else
                     Console.WriteLine("❌ Popup không đóng đúng cách!");
@@ -530,19 +306,667 @@ namespace test_salephone.Tests
             }
 
             // Ghi trạng thái test ra Excel nếu cần
-            foreach (var thongBao in thongBaoList)
-            {
-                string allMessages = string.Join("\n", thongBaoList);
-                ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, thongBao);
-            }
+            string allMessages = string.Join("\n", thongBaoList);
+            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, allMessages);
         }
+
+
+        // [Test]
+        // [Description("Test Kiểm tra giao diện đơn hàng")]
+        // [Category("Order Management")]
+        // [TestCase("ID_Order_01", "Giao diện hiển thị đầy đủ", TestName = "ID_Order_01")]
+        // [TestCase("ID_Order_02", "Giao diện hiển thị đầy đủ khi có 1 đơn hàng", TestName = "ID_Order_02")]
+        // [TestCase("ID_Order_03", "Không có đơn nào trong danh sách", TestName = "ID_Order_03")]
+        // public void Test_ViewOrder(String testCaseID, String thongBao)
+        // {
+        //     string status = "Fail";
+        //     try
+        //     {
+        //         // Đọc dữ liệu kiểm thử từ Excel
+        //         string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+
+        //         if (string.IsNullOrEmpty(dataTest))
+        //         {
+        //             Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+        //             return;
+        //         }
+
+        //         WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        //         // Kiểm tra xem danh sách đơn hàng có hiển thị không
+        //         IWebElement orderList = wait.Until(d => d.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]")));
+        //         if (orderList.Displayed)
+        //         {
+        //             Console.WriteLine("✅ Giao diện hiển thị danh sách đơn hàng đầy đủ");
+        //             status = "Pass";
+        //         }
+        //         else
+        //         {
+        //             Console.WriteLine("❌ Không tìm thấy danh sách đơn hàng");
+        //             status = "Fail";
+        //         }
+                
+        //         // Đóng cửa sổ nếu có nút đóng
+        //         var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+        //         if (closeButton.Count > 0)
+        //         {
+        //             closeButton[0].Click();
+        //             Console.WriteLine("✅ Đã nhấp vào nút đóng.");
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+        //     }
+
+        //     //Ghi trạng thái test ra Excel nếu cần
+        //     string testResultMessage = thongBao;
+        //     ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
+        // }
+
+        // [Test]
+        // [Description("Test Kiểm tra giao diện đơn hàng")]
+        // [Category("Order Management")]
+        // [TestCase("ID_Order_04", "Đơn hàng hiển thị đúng với dữ liệu", TestName = "ID_Order_04")]
+        // public void Test_VerifyOrderQuantity(String testCaseID, String thongBao)
+        // {
+        //     string status = "Fail";
+        //     try
+        //     {
+        //         // Đọc dữ liệu kiểm thử từ Excel
+        //         string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+
+        //         if (string.IsNullOrEmpty(dataTest))
+        //         {
+        //             Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+        //             return;
+        //         }
+
+        //         WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        //         //Lấy số lượng đơn hàng từ tiêu đề (Ví dụ: "Tổng số lượng đơn hàng: 113")
+        //         string totalOrderText = driver.FindElement(By.XPath("//div[contains(text(),'Tổng số lượng đơn hàng')]")).Text;
+        //         string[] parts = totalOrderText.Split(':');
+
+        //         if (parts.Length < 2 || string.IsNullOrWhiteSpace(parts[1]))
+        //         {
+        //             throw new Exception("⚠️ LỖI: Không lấy được số lượng đơn hàng!");
+        //         }
+
+        //         if (!int.TryParse(parts[1].Trim(), out int totalOrderCount))
+        //         {
+        //             throw new Exception($"⚠️ LỖI: Giá trị '{parts[1].Trim()}' không phải số hợp lệ!");
+        //         }
+        //         Console.WriteLine($"📌 Tổng số lượng đơn hàng hiển thị: {totalOrderCount}");
+
+        //         //Đếm số lượng đơn hàng thực tế bằng cách duyệt qua từng trang
+        //         int actualOrderCount = 0;
+
+        //         while (true)
+        //         {
+        //             // Kiểm tra trang hiện tại để debug
+        //             var currentPage = driver.FindElement(By.XPath("//li[contains(@class,'ant-pagination-item-active')]")).Text;
+        //             Console.WriteLine($"📌 Đang ở trang: {currentPage}");
+
+        //             // Đếm số đơn hàng trên trang hiện tại
+        //             List<IWebElement> orderRows = driver.FindElements(By.XPath("//tr[contains(@class, 'ant-table-row')]")).ToList();
+        //             actualOrderCount += orderRows.Count;
+
+        //             // Kiểm tra xem có thể bấm Next không
+        //             var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+                    
+        //             if (nextPageButton.Count > 0)
+        //             {
+        //                 Console.WriteLine("📌 Chuyển sang trang tiếp theo...");
+        //                 nextPageButton[0].Click();
+
+        //                 // Đợi trang tải xong
+        //                 // WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+        //                 // wait.Until(drv => drv.FindElement(By.XPath("//table//tbody//tr")));
+
+        //                 Thread.Sleep(1000); // Chờ thêm 1s để tránh lỗi hiển thị chậm
+        //             }
+        //             else
+        //             {
+        //                 Console.WriteLine("✅ Đã duyệt hết tất cả các trang.");
+        //                 break; // Thoát vòng lặp khi không còn nút Next
+        //             }
+        //         }
+
+
+        //         Console.WriteLine($"📌 Số đơn hàng thực tế sau khi duyệt tất cả trang: {actualOrderCount}");
+
+        //         // So sánh hai số và in kết quả
+        //         if (totalOrderCount == actualOrderCount)
+        //         {
+        //             Console.WriteLine("✅ Dữ liệu đúng: Số lượng đơn hàng hiển thị khớp với số đơn hàng thực tế.");
+        //             status = "Pass";
+        //         }
+        //         else
+        //         {
+        //             Console.WriteLine($"❌ LỖI: Số đơn hàng hiển thị ({totalOrderCount}) KHÔNG khớp với số đơn hàng thực tế ({actualOrderCount}).");
+        //             status = "Fail";
+        //             thongBao = "Đơn hàng hiển thị sai dữ liệu";
+        //         }
+                
+        //         // Đóng cửa sổ nếu có nút đóng
+        //         var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+        //         if (closeButton.Count > 0)
+        //         {
+        //             closeButton[0].Click();
+        //             Console.WriteLine("✅ Đã nhấp vào nút đóng.");
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+        //     }
+
+        //     //Ghi trạng thái test ra Excel nếu cần
+        //     string testResultMessage = thongBao;
+        //     ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
+        // }
+
+        // [Test]
+        // [Description("Test Kiểm tra giao diện đơn hàng")]
+        // [Category("Order Management")]
+        // [TestCase("ID_Order_05", "Hiển thị đúng danh sách sản phẩm trong đơn hàng")]
+        // public void Test_ManyproductsinOrder(String testCaseID, String thongBao)
+        // {
+        //     string status = "Fail";
+        //     try
+        //     {
+        //         // Đọc dữ liệu kiểm thử từ Excel
+        //         string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+
+        //         if (string.IsNullOrEmpty(dataTest))
+        //         {
+        //             Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+        //             return;
+        //         }
+
+        //         WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        //         // Chọn đơn hàng đầu tiên để mở chi tiết
+        //         driver.FindElement(By.XPath("//button[@type='button' and @class='ant-table-row-expand-icon ant-table-row-expand-icon-collapsed' and @aria-label='Expand row' and @aria-expanded='false']")).Click();
+        //         Thread.Sleep(3000); 
+
+        //         // Lấy danh sách sản phẩm trong chi tiết đơn hàng
+        //         var productElements = driver.FindElements(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[3]/td/div/div/div[2]"));
+        //         List<string> displayedProducts = productElements.Select(el => el.Text.Trim()).ToList();
+
+        //         // In danh sách sản phẩm ra console
+        //         Console.WriteLine("Danh sách sản phẩm hiển thị trong đơn hàng:");
+        //         displayedProducts.ForEach(product => Console.WriteLine($"- {product}"));
+
+        //         // Kiểm tra danh sách không rỗng
+        //         if (displayedProducts.Count > 0)
+        //         {
+        //             Console.WriteLine("Danh sách sản phẩm hiển thị đúng.");
+        //             status = "Pass";
+        //         }
+        //         else
+        //         {
+        //             Console.WriteLine("LỖI: Không có sản phẩm nào hiển thị trong đơn hàng!");
+        //             status = "Fail";
+        //         }
+                
+        //         // Đóng cửa sổ nếu có nút đóng
+        //         var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+        //         if (closeButton.Count > 0)
+        //         {
+        //             closeButton[0].Click();
+        //             Console.WriteLine("✅ Đã nhấp vào nút đóng.");
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+        //     }
+
+        //     //Ghi trạng thái test ra Excel nếu cần
+        //     string testResultMessage = thongBao;
+        //     ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
+        // }
+
+        [Test]
+        [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
+        [Category("Order Management")]
+        [TestCase("ID_Order_07", "Đã giao hàng", "Đã giao hàng thành công", "Trạng thái tình trạng đơn hàng được cập nhật thành công", TestName = "ID_Order_07")]
+        [TestCase("ID_Order_08", "Đã thanh toán", "Đã thanh toán thành công", "Trạng thái thanh toán đơn hàng được cập nhật thành công", TestName = "ID_Order_08")]
+        public void Test_Update_OrderStatus(string testCaseID, string expectedAdminStatus, string expectedUserStatus, string thongBao)
+        {
+            string status = "Fail";
+            IWebElement orderRow = null;
+            try
+            {
+                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                if (string.IsNullOrEmpty(dataTest))
+                {
+                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+                    return;
+                }
+
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+                while (true)
+                {
+                    try
+                    {
+                        orderRow = driver.FindElement(By.XPath("//td[normalize-space()='67e19e091bb6b5978a009687']"));
+                        Console.WriteLine("Đã tìm thấy đơn hàng '67e19e091bb6b5978a009687'");
+                        break;
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+                        if (nextPageButton.Count > 0) nextPageButton[0].Click();
+                        else return;
+                        Thread.Sleep(2000);
+                    }
+                }
+
+                IWebElement statusDropdown = driver.FindElement(By.XPath($"//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đang xử lý' or text()='Chưa thanh toán']"));
+                statusDropdown.Click();
+                Thread.Sleep(3000);
+
+                driver.FindElement(By.XPath($"//li[contains(@class, 'ant-dropdown-menu-item')]//span[text()='{expectedAdminStatus}']")).Click();
+                Thread.Sleep(3000);
+
+                driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/system/admin");
+                Thread.Sleep(3000);
+                driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]")).Click();
+                Thread.Sleep(10000);
+                string updatedStatus = driver.FindElement(By.XPath($"//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='{expectedAdminStatus}']")).Text;
+                Console.WriteLine("Trạng thái đơn hàng mới: " + updatedStatus);
+
+                driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+                Thread.Sleep(2000);
+                driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
+                Thread.Sleep(5000);
+
+                driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in");
+                Thread.Sleep(5000);
+                driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys("rinlam@gmail.com");
+                driver.FindElement(By.XPath("//input[@placeholder='Nhập mật khẩu']")).SendKeys("123456R");
+                driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
+                Thread.Sleep(10000);
+
+                driver.FindElement(By.XPath("//div[contains(text(),'DSFDHDS')]")).Click();
+                Thread.Sleep(5000);
+                driver.FindElement(By.XPath("//p[contains(text(),'Lịch sử mua hàng')]")).Click();
+                Thread.Sleep(7000);
+                string userOrderStatus = driver.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[1]/div/div/div/div[1]/div[2]/p[contains(text(), 'Đã')]/div/div/div")).Text;
+                Console.WriteLine("Trạng thái đơn hàng của user: " + userOrderStatus);
+
+                if (updatedStatus == expectedAdminStatus && userOrderStatus == expectedUserStatus)
+                {
+                    status = "Pass";
+                }
+                else
+                {
+                    Console.WriteLine("❌ Trạng thái đơn hàng không đúng, kiểm tra lại!");
+                }
+
+                var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+                if (closeButton.Count > 0) closeButton[0].Click();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+            }
+
+            ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, thongBao);
+        }
+
+
+        // [Test]
+        // [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
+        // [Category("Order Management")]
+        // [TestCase("ID_Order_07", "Trạng thái tình trạng đơn hàng được cập nhật thành công", TestName = "ID_Order_07")]
+        // public void Test_Update_StatusOrder(String testCaseID, String thongBao)
+        // {
+        //     string status = "Fail";
+        //     IWebElement orderRow = null;
+        //     try
+        //     {
+        //         // Đọc dữ liệu kiểm thử từ Excel
+        //         string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+
+        //         if (string.IsNullOrEmpty(dataTest))
+        //         {
+        //             Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+        //             return;
+        //         }
+
+        //         WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        //         // Tìm đơn hàng có trạng thái "Đã giao hàng" trên bất kỳ trang nào
+        //         while (true)
+        //         {
+        //             try
+        //             {
+        //                 // Tìm đơn hàng có trạng thái "67e19e091bb6b5978a009687" trên trang hiện tại
+        //                 orderRow = driver.FindElement(By.XPath("//td[normalize-space()='67e19e091bb6b5978a009687']"));
+        //                 Thread.Sleep(3000);
+        //                 // Nếu tìm thấy, thoát vòng lặp để xử lý
+        //                 Console.WriteLine("Đã tìm thấy đơn hàng '67e19e091bb6b5978a009687'");
+        //                 break;
+        //             }
+        //             catch (NoSuchElementException)
+        //             {
+        //                 // Nếu không tìm thấy đơn hàng trên trang hiện tại, kiểm tra nút chuyển trang
+        //                 var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+        //                 if (nextPageButton.Count > 0)
+        //                 {
+        //                     // Chuyển sang trang tiếp theo
+        //                     Console.WriteLine("Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+        //                     nextPageButton[0].Click();
+        //                     Thread.Sleep(2000); 
+        //                 }
+        //                 else
+        //                 {
+        //                     // Không còn trang nào để tìm
+        //                     Console.WriteLine("Không có đơn hàng '67e19e091bb6b5978a009687' trên tất cả các trang.");
+        //                     return; // Kết thúc vì không tìm thấy
+        //                 }
+        //             }
+        //         }
+        //         // // Chọn đơn hàng cần sửa
+        //         // Thread.Sleep(3000);
+        //         // IWebElement latestOrder = driver.FindElement(By.XPath("//td[normalize-space()='67e19e091bb6b5978a009687']"));
+        //         // //latestOrder.Click();
+        //         Thread.Sleep(3000);
+                
+        //         // Nhấn vào trạng thái "Đang xử lý" để mở dropdown
+        //         IWebElement statusDropdown = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đang xử lý']"));
+        //         statusDropdown.Click();
+        //         Thread.Sleep(3000);
+                
+        //         // Chọn trạng thái "Đã giao hàng"
+        //         driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã giao hàng']")).Click();
+        //         Thread.Sleep(3000);
+                
+        //         // Vào trang quản lý đơn hàng bên Admin để kiểm tra trạng thái đơn hàng
+        //         driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/system/admin");
+        //         Thread.Sleep(3000);
+        //         IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]"));
+        //         sanPhamMenu.Click();
+        //         Thread.Sleep(10000);
+        //         string updatedStatus = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đã giao hàng']")).Text;
+        //         Thread.Sleep(3000);
+        //         Console.WriteLine("Trạng thái đơn hàng mới: " + updatedStatus);
+
+        //         Thread.Sleep(2000);
+        //         //driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
+        //         driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+        //         Thread.Sleep(2000);
+        //         driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
+        //         Thread.Sleep(5000);
+                
+        //         // Đăng nhập vào trang user đã đặt hàng
+        //         driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in"); 
+        //         //driver.FindElement(By.XPath("//span[@aria-label='user']//*[name()='svg']"));
+        //         Thread.Sleep(5000);
+        //         IWebElement emailFiel= driver.FindElement(By.XPath("//input[@placeholder='Email']"));
+        //         Thread.Sleep(5000);
+        //         emailFiel.SendKeys("rinlam@gmail.com");
+        //         driver.FindElement(By.XPath("//input[@placeholder='Nhập mật khẩu']")).SendKeys("123456R");
+        //         driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
+        //         Thread.Sleep(10000);
+                
+        //         // Vào trang "Lịch sử mua hàng" để kiểm tra đơn hàng mới nhất
+        //         driver.FindElement(By.XPath("//div[contains(text(),'DSFDHDS')]")).Click();
+        //         Thread.Sleep(5000);
+        //         driver.FindElement(By.XPath("//p[contains(text(),'Lịch sử mua hàng')]")).Click();
+        //         Thread.Sleep(7000);
+        //         string userOrderStatus = driver.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[1]/div/div/div/div[1]/div[2]/p[1]/div/div/div")).Text;
+        //         Console.WriteLine("Trạng thái đơn hàng của user: " + userOrderStatus);
+        //         if (updatedStatus == "Đã giao hàng" && userOrderStatus == "Đã giao hàng thành công")
+        //         {
+        //             status = "Pass";
+        //         }
+        //         else
+        //         {
+        //             Console.WriteLine("❌ Trạng thái đơn hàng không đúng, kiểm tra lại!");
+        //             status = "Fail";
+        //         }
+                
+        //         // Đóng cửa sổ nếu có nút đóng
+        //         var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+        //         if (closeButton.Count > 0)
+        //         {
+        //             closeButton[0].Click();
+        //             Console.WriteLine("✅ Đã nhấp vào nút đóng.");
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+        //     }
+
+        //     //Ghi trạng thái test ra Excel nếu cần
+        //     string testResultMessage = thongBao;
+        //     ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
+        // }
+
+        // [Test]
+        // [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
+        // [Category("Order Management")]
+        // [TestCase("ID_Order_08", "Trạng thái thanh toán đơn hàng được cập nhật thành công", TestName = "ID_Order_08")]
+        // public void Test_Update_StatusOrderr(String testCaseID, String thongBao)
+        // {
+        //     string status = "Fail";
+        //     IWebElement orderRow = null;
+        //     try
+        //     {
+        //         // Đọc dữ liệu kiểm thử từ Excel
+        //         string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+
+        //         if (string.IsNullOrEmpty(dataTest))
+        //         {
+        //             Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+        //             return;
+        //         }
+
+        //         WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        //         // Tìm đơn hàng có trạng thái "Đã giao hàng" trên bất kỳ trang nào
+        //         while (true)
+        //         {
+        //             try
+        //             {
+        //                 // Tìm đơn hàng có trạng thái "67e19e091bb6b5978a009687" trên trang hiện tại
+        //                 orderRow = driver.FindElement(By.XPath("//td[normalize-space()='67e19e091bb6b5978a009687']"));
+        //                 Thread.Sleep(3000);
+        //                 // Nếu tìm thấy, thoát vòng lặp để xử lý
+        //                 Console.WriteLine("Đã tìm thấy đơn hàng '67e19e091bb6b5978a009687'");
+        //                 break;
+        //             }
+        //             catch (NoSuchElementException)
+        //             {
+        //                 // Nếu không tìm thấy đơn hàng trên trang hiện tại, kiểm tra nút chuyển trang
+        //                 var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+        //                 if (nextPageButton.Count > 0)
+        //                 {
+        //                     // Chuyển sang trang tiếp theo
+        //                     Console.WriteLine("Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+        //                     nextPageButton[0].Click();
+        //                     Thread.Sleep(2000); 
+        //                 }
+        //                 else
+        //                 {
+        //                     // Không còn trang nào để tìm
+        //                     Console.WriteLine("Không có đơn hàng '67e19e091bb6b5978a009687' trên tất cả các trang.");
+        //                     return; // Kết thúc vì không tìm thấy
+        //                 }
+        //             }
+        //         }
+        //         // // Chọn đơn hàng cần sửa
+        //         // Thread.Sleep(3000);
+        //         // IWebElement latestOrder = driver.FindElement(By.XPath("//td[normalize-space()='67e19e091bb6b5978a009687']"));
+        //         // //latestOrder.Click();
+        //         Thread.Sleep(3000);
+                
+        //         // Nhấn vào trạng thái "Đang xử lý" để mở dropdown
+        //         IWebElement statusDropdown = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Chưa thanh toán']"));
+        //         statusDropdown.Click();
+        //         Thread.Sleep(3000);
+                
+        //         // Chọn trạng thái "Đã giao hàng"
+        //         driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã thanh toán']")).Click();
+        //         Thread.Sleep(3000);
+                
+        //         // Vào trang quản lý đơn hàng bên Admin để kiểm tra trạng thái đơn hàng
+        //         driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/system/admin");
+        //         Thread.Sleep(3000);
+        //         IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]"));
+        //         sanPhamMenu.Click();
+        //         Thread.Sleep(10000);
+        //         string updatedStatus = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đã giao hàng']")).Text;
+        //         Thread.Sleep(3000);
+        //         Console.WriteLine("Trạng thái đơn hàng mới: " + updatedStatus);
+
+        //         Thread.Sleep(2000);
+        //         //driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
+        //         driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+        //         Thread.Sleep(2000);
+        //         driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
+        //         Thread.Sleep(5000);
+                
+        //         // Đăng nhập vào trang user đã đặt hàng
+        //         driver.Navigate().GoToUrl("https://frontend-salephones.vercel.app/sign-in"); 
+        //         //driver.FindElement(By.XPath("//span[@aria-label='user']//*[name()='svg']"));
+        //         Thread.Sleep(5000);
+        //         IWebElement emailFiel= driver.FindElement(By.XPath("//input[@placeholder='Email']"));
+        //         Thread.Sleep(5000);
+        //         emailFiel.SendKeys("rinlam@gmail.com");
+        //         driver.FindElement(By.XPath("//input[@placeholder='Nhập mật khẩu']")).SendKeys("123456R");
+        //         driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
+        //         Thread.Sleep(10000);
+                
+        //         // Vào trang "Lịch sử mua hàng" để kiểm tra đơn hàng mới nhất
+        //         driver.FindElement(By.XPath("//div[contains(text(),'DSFDHDS')]")).Click();
+        //         Thread.Sleep(5000);
+        //         driver.FindElement(By.XPath("//p[contains(text(),'Lịch sử mua hàng')]")).Click();
+        //         Thread.Sleep(7000);
+        //         string userOrderStatus = driver.FindElement(By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[1]/div/div/div/div[1]/div[2]/p[2]/div/div/div")).Text;
+        //         Console.WriteLine("Trạng thái đơn hàng của user: " + userOrderStatus);
+        //         if (updatedStatus == "Đã thanh toán" && userOrderStatus == "Đã thanh toán thành công")
+        //         {
+        //             status = "Pass";
+        //         }
+        //         else
+        //         {
+        //             Console.WriteLine("❌ Thanh toán đơn hàng không đúng, kiểm tra lại!");
+        //             status = "Fail";
+        //         }
+                
+        //         // Đóng cửa sổ nếu có nút đóng
+        //         var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+        //         if (closeButton.Count > 0)
+        //         {
+        //             closeButton[0].Click();
+        //             Console.WriteLine("✅ Đã nhấp vào nút đóng.");
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+        //     }
+
+        //     //Ghi trạng thái test ra Excel nếu cần
+        //     string testResultMessage = thongBao;
+        //     ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
+        // }
+
+        // [Test]
+        // [Description("Test Kiểm tra chỉnh sửa đơn hàng")]
+        // [Category("Order Management")]
+        // [TestCase("ID_Order_08", "Trạng thái thanh toán đơn hàng được cập nhật thành công")]
+        // public void Test_Update_PaymentOrder(String testCaseID, String thongBao)
+        // {
+        //     //TestName =
+        //     string status = "Fail";
+        //     IWebElement orderRow = null;
+        //     try
+        //     {
+        //         // Đọc dữ liệu kiểm thử từ Excel
+        //         string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+
+        //         if (string.IsNullOrEmpty(dataTest))
+        //         {
+        //             Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+        //             return;
+        //         }
+
+        //         WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        //         // Tìm đơn hàng có trạng thái "Chưa thanh toán", duyệt qua các trang nếu cần
+        //         while (true)
+        //         {
+        //             try
+        //             {
+        //                 orderRow = driver.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']"));
+        //                 if (orderRow != null)
+        //                 {
+        //                     Console.WriteLine("✅ Tìm thấy đơn hàng 'Chưa thanh toán'");
+        //                     break;
+        //                 }
+        //             }
+        //             catch (NoSuchElementException)
+        //             {
+        //                 // Kiểm tra nút next có khả dụng không
+        //                 var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+        //                 if (nextPageButton.Count > 0)
+        //                 {
+        //                     Console.WriteLine("📌 Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+        //                     nextPageButton[0].Click();
+        //                     Thread.Sleep(2000);
+        //                 }
+        //                 else
+        //                 {
+        //                     Console.WriteLine("❌ Không có đơn hàng 'Đang xử lý' trên tất cả các trang.");
+        //                     return;
+        //                 }
+        //             }
+        //         }
+
+        //         // Nhấn vào trạng thái "Chưa thanh toán" để mở dropdown
+        //         var statusButton = orderRow.FindElement(By.XPath("//td[contains(@class, 'ant-table-cell') and contains(@class, 'ant-table-cell-fix-left')]//button[contains(@class, 'ant-btn')]//span[text()='Chưa thanh toán']")); 
+        //         statusButton.Click();
+        //         Thread.Sleep(1000);
+
+        //         // Chọn "Đã thanh toán" từ danh sách dropdown
+        //         driver.FindElement(By.XPath("//li[contains(@class, 'ant-dropdown-menu-item') and contains(@class, 'ant-dropdown-menu-item-only-child') and @role='menuitem']//span[text()='Đã thanh toán']"))?.Click();
+        //         status = "Pass";
+        //         Thread.Sleep(1000);
+                
+        //         // Đóng cửa sổ nếu có nút đóng
+        //         var closeButton = driver.FindElements(By.XPath("//button[@class='ant-drawer-close'][.//span[contains(@class, 'anticon-close')]]"));
+        //         if (closeButton.Count > 0)
+        //         {
+        //             closeButton[0].Click();
+        //             Console.WriteLine("✅ Đã nhấp vào nút đóng.");
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"⚠️ Lỗi: {ex.Message}");
+        //     }
+
+        //     //Ghi trạng thái test ra Excel nếu cần
+        //     string testResultMessage = thongBao;
+        //     ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, testResultMessage);
+        // }
 
         [Test]
         [Description("Test Sắp xếp đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_09", "Mã đơn hàng", "Danh sách đơn hàng không được sắp xếp")]
-        [TestCase("ID_Order_15", "Ngày đặt", "Danh sách đơn hàng không được sắp xếp")]
-        [TestCase("ID_Order_16", "Phí giao hàng", "Danh sách đơn hàng không được sắp xếp")]
+        [TestCase("ID_Order_09", "Mã đơn hàng", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_09")]
+        [TestCase("ID_Order_15", "Ngày đặt", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_15")]
+        [TestCase("ID_Order_16", "Phí giao hàng", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_16")]
         public void Test_Sort_Orderlist_Fail(String testCaseID, String columnName, String thongBao)
         {
             string status = "Fail";
@@ -604,13 +1028,13 @@ namespace test_salephone.Tests
 
                 if (actualOrderList.SequenceEqual(expectedOrderList))
                 {
-                    status = "Pass"; // Nếu đúng thì test pass
-                    thongBao = "Danh sách đơn hàng được sắp xếp"; // Cập nhật thông báo
+                    status = "Pass"; 
+                    thongBao = "Danh sách đơn hàng được sắp xếp"; 
                 }
                 else
                 {
-                    status = "Fail"; // Nếu sai thì test fail
-                    thongBao = "Danh sách đơn hàng không được sắp xếp"; // Cập nhật thông báo
+                    status = "Fail"; 
+                    thongBao = "Danh sách đơn hàng không được sắp xếp"; 
                 }
             }
             catch (Exception ex)
@@ -625,13 +1049,13 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Sắp xếp đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_10", "Tình trạng", "Danh sách đơn hàng được sắp xếp")]
-        [TestCase("ID_Order_11", "Thanh toán", "Danh sách đơn hàng được sắp xếp")]
-        [TestCase("ID_Order_12", "Tên người mua", "Danh sách đơn hàng được sắp xếp")]
-        [TestCase("ID_Order_13", "Phương thức thanh toán", "Danh sách đơn hàng được sắp xếp")]
-        [TestCase("ID_Order_14", "Tổng tiền đơn hàng", "Danh sách đơn hàng được sắp xếp")]
-        [TestCase("ID_Order_17", "Địa chỉ", "Danh sách đơn hàng được sắp xếp")]
-        [TestCase("ID_Order_18", "Thành phố", "Danh sách đơn hàng được sắp xếp")]
+        [TestCase("ID_Order_10", "Tình trạng", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_10")]
+        [TestCase("ID_Order_11", "Thanh toán", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_11")]
+        [TestCase("ID_Order_12", "Tên người mua", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_12")]
+        [TestCase("ID_Order_13", "Phương thức thanh toán", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_13")]
+        [TestCase("ID_Order_14", "Tổng tiền đơn hàng", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_14")]
+        [TestCase("ID_Order_17", "Địa chỉ", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_17")]
+        [TestCase("ID_Order_18", "Thành phố", "Danh sách đơn hàng được sắp xếp", TestName = "ID_Order_18")]
         public void Test_Sort_Orderlist_Pass(String testCaseID, String columnName, String thongBao)
         {
             string status = "Fail";
@@ -696,7 +1120,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Phân trang đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_19", "Hiển thị đúng")]
+        [TestCase("ID_Order_19", "Hiển thị đúng", TestName = "ID_Order_19")]
         public void Test_CheckOrdersPerPageAndSelectAnyPage(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -732,15 +1156,6 @@ namespace test_salephone.Tests
                 int secondPageCount = CountOrdersOnPage();
                 Console.WriteLine($"Số đơn hàng trên trang 2: {secondPageCount}");
                 Console.WriteLine(secondPageCount == 10 ? "Trang 2 hiển thị đúng 10 đơn hàng." : "Trang 2 hiển thị sai số lượng đơn hàng!");
-
-                // Chuyển sang trang số 3 bằng cách nhấp vào số trang
-                driver.FindElement(By.XPath("//a[normalize-space()='3']")).Click();
-                Thread.Sleep(3000);
-
-                // Kiểm tra số lượng đơn hàng trên trang 3
-                int thirdPageCount = CountOrdersOnPage();
-                Console.WriteLine($"Số đơn hàng trên trang 3: {thirdPageCount}");
-                Console.WriteLine(thirdPageCount == 10 ? "Trang 3 hiển thị đúng 10 đơn hàng." : "Trang 3 hiển thị sai số lượng đơn hàng!");
                 status ="Pass";
                 
                 // Đóng cửa sổ nếu có nút đóng
@@ -764,7 +1179,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Phân trang đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_20", "Hiển thị đúng")]
+        [TestCase("ID_Order_20", "Hiển thị đúng", TestName = "ID_Order_20")]
         public void Test_Verify8Orders(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -842,8 +1257,8 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Phân trang đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_21", "HIển thị đúng")]
-        [TestCase("ID_Order_22", "Hiển thị đúng")]
+        [TestCase("ID_Order_21", "HIển thị đúng", TestName = "ID_Order_21")]
+        [TestCase("ID_Order_22", "Hiển thị đúng", TestName = "ID_Order_22")]
         public void Test_ButtonNextPrevious(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -949,9 +1364,9 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Phân trang đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_23", "HIển thị đúng")]
-        [TestCase("ID_Order_24", "Hiển thị đúng")]
-        public void Test_PreviousNextButton(String testCaseID, String thongBao)
+        [TestCase("ID_Order_23", "HIển thị đúng", TestName = "ID_Order_23")]
+        [TestCase("ID_Order_24", "Hiển thị đúng", TestName = "ID_Order_24")]
+        public void Test_PreviousNextButtonUI(String testCaseID, String thongBao)
         {
             string status = "Fail";
             try
@@ -1028,7 +1443,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Logic đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_25", "Đơn hàng vẫn có thể thay đổi tình trạng đơn hàng")]
+        [TestCase("ID_Order_25", "Đơn hàng vẫn có thể thay đổi tình trạng đơn hàng", TestName = "ID_Order_25")]
         public void Test_ChangeStatus_OrderLogic(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1114,7 +1529,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Logic đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_26", "Đơn hàng vẫn có thể thay đổi phương thức thanh toán")]
+        [TestCase("ID_Order_26", "Đơn hàng vẫn có thể thay đổi phương thức thanh toán", TestName = "ID_Order_26")]
         public void Test_ChangePayment_OrderLogic(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1200,7 +1615,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Logic đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_27", "Có thể cập nhật thanh toán cho đơn hàng bị huỷ")]
+        [TestCase("ID_Order_27", "Có thể cập nhật thanh toán cho đơn hàng bị huỷ", TestName = "ID_Order_27")]
         public void Test_UpdatePayment_CancelledOrder(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1304,7 +1719,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Logic đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_28", "Tình trạng đơn hàng vẫn thay đổi được bình thường và không nhận được thông báo nào")]
+        [TestCase("ID_Order_28", "Hiển thị thông báo lỗi: 'Không thể thay đổi tình trạng đơn hàng 'Đã huỷ' sang một trạng thái mới'", TestName = "ID_Order_28")]
         public void Test_CannotChangeCancelledOrderStatus(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1384,6 +1799,8 @@ namespace test_salephone.Tests
                     else
                     {
                         Console.WriteLine("Trạng thái đã bị thay đổi sai. [FAIL]");
+                        status ="Fail";
+                        thongBao = "Tình trạng đơn hàng vẫn thay đổi được bình thường và không nhận được thông báo nào";
                     }
                 }
 
@@ -1407,7 +1824,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Logic đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_29", "Màu sắc hiển thị của tổng tiền là màu đỏ")]
+        [TestCase("ID_Order_29", "Màu sắc hiển thị của tổng tiền là màu đỏ", TestName = "ID_Order_29")]
         public void Test_OrderTotalColorIsRed(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1484,7 +1901,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Thông báo đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_30", "Không có thông báo")]
+        [TestCase("ID_Order_30", "Không có thông báo", TestName = "ID_Order_30")]
         public void Test_UpdateOrderStatus_Notification(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1593,7 +2010,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Test Thông báo đơn hàng")]
         [Category("Order Management")]
-        [TestCase("ID_Order_31", "Không có thông báo")]
+        [TestCase("ID_Order_31", "Không có thông báo", TestName = "ID_Order_31")]
         public void Test_CustomerReceivesOrder_ChangeNotification(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1697,7 +2114,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Kiểm tra biểu đồ hiển thị đúng tỷ lệ phương thức thanh toán.")]
         [Category("Order Management")]
-        [TestCase("ID_Order_32", "Biểu đồ hiển thị đúng")]
+        [TestCase("ID_Order_32", "Biểu đồ hiển thị đúng", TestName = "ID_Order_32")]
         public void Test_PieChart_Payment(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1785,7 +2202,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Kiểm tra biểu đồ hiển thị khi không có đơn hàng nào.")]
         [Category("Order Management")]
-        [TestCase("ID_Order_33", "Biểu đồ không hiển thị gì cả")]
+        [TestCase("ID_Order_33", "Biểu đồ không hiển thị gì cả", TestName = "ID_Order_33")]
         public void Test_PieChart_NoOrders(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1811,6 +2228,8 @@ namespace test_salephone.Tests
                     else
                     {
                         Console.WriteLine($"❌ Biểu đồ vẫn hiển thị: {pieChart[0].Text}");
+                        status = "Fail";
+                        thongBao = "Biểu đồ vẫn hiển thị do đã có qúa nhiều đơn hàng";
                     }
                 }
             }
@@ -1826,7 +2245,7 @@ namespace test_salephone.Tests
         [Test]
         [Description("Kiểm tra biểu đồ hiển thị khi chỉ có 1 phương thức thanh toán.")]
         [Category("Order Management")]
-        [TestCase("ID_Order_34", "Biểu đồ hiển thị đúng tỷ lệ: 100%")]
+        [TestCase("ID_Order_34", "Biểu đồ hiển thị đúng tỷ lệ: 100%", TestName = "ID_Order_34")]
         public void Test_PieChart_SinglePaymentMethod(String testCaseID, String thongBao)
         {
             string status = "Fail";
@@ -1882,6 +2301,8 @@ namespace test_salephone.Tests
                     else
                     {
                         Console.WriteLine($"❌ Biểu đồ không hiển thị đúng 100%. Nội dung: {pieChartText}");
+                        status = "Fail";
+                        thongBao = "Biểu đồ hiển thị không đúng do hiện tại có rất nhiều đơn hàng với nhiều phương thức thanh toán khác nhau";
                     }
                 }
                 else
