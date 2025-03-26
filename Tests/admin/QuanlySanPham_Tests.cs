@@ -37,18 +37,19 @@ namespace QuanLySanPham_Tests
             Thread.Sleep(2000);
             IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Sản phẩm')]"));
             sanPhamMenu.Click();
-            Thread.Sleep(20000);
+            Thread.Sleep(10000);
         }
         
 
-   [Test]
+    [Test]
 [Description("Test Thêm sản phẩm")]
 [TestCase("ID_QLSANPHAM_01", "Thêm sản phẩm thành công")]
-[TestCase("ID_QLSANPHAM_02", "Thêm sản phẩm không thành công")]
-[TestCase("ID_QLSANPHAM_03", "Thêm sản phẩm không thành công")]
+[TestCase("ID_QLSANPHAM_02", "Giá sản phẩm phải là một số hợp lệ và lớn hơn 0")]
+[TestCase("ID_QLSANPHAM_03", "Vui lòng không bỏ trống!")]
 public void Test_ThemSanPham(String testCaseID, String thongBao)
 {
     string status = "Fail";
+    string actualResult = string.Empty;
     try
     {   
         // Lấy dữ liệu test từ file Excel dựa theo testCaseID
@@ -112,7 +113,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         driver.FindElement(By.XPath("//span[text()='Select Files']")).Click();
         Thread.Sleep(2000);
         IWebElement fileInput = driver.FindElement(By.CssSelector("input[type='file']"));
-        fileInput.SendKeys(@"C:\Users\Admin\Downloads\iphone16.jpg");
+        fileInput.SendKeys(@"C:\\Users\\Admin\\Downloads\\iphone16.jpg");
         Thread.Sleep(2000);
 
         IWebElement checkBox = driver.FindElement(By.CssSelector("input[type='checkbox']"));
@@ -164,68 +165,72 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
         var errorElements = driver.FindElements(By.XPath("//div[@class='ant-message-notice-content']//span[contains(text(),'Giá sản phẩm phải là một số hợp lệ')]"));
         if (errorElements.Count > 0)
         {
-            string actualError = errorElements.First().Text.Trim();
-            Console.WriteLine($"✅ Actual Result: {actualError}");
+            actualResult = errorElements.First().Text.Trim();
+            Console.WriteLine($"✅ Actual Result: {actualResult}");
             status = "Pass";
-            ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
-            return;
-        }
-
-        // Kiểm tra thông báo validate (ví dụ: Vui lòng không bỏ trống!)
-        var validateElements = driver.FindElements(By.XPath("//div[@class='ant-form-item-explain-error']"));
-        if (validateElements.Count > 0)
-        {
-            string actualValidate = validateElements.First().Text.Trim();
-            Console.WriteLine($"✅ Actual Result: {actualValidate}");
-            status = "Pass";
-            ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
-            return;
-        }
-
-        // Nếu không có lỗi, bắt thông báo thành công
-        WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
-        IWebElement element = waitMessage.Until(drv =>
-        {
-            try
-            {
-                var elements = drv.FindElements(By.XPath("//div[contains(@class, 'ant-message-notice-content')]//span[2]"));
-                return elements.FirstOrDefault(el => el.Displayed);
-            }
-            catch (NoSuchElementException)
-            {
-                return null;
-            }
-        });
-
-        Assert.That(element, Is.Not.Null, "Không tìm thấy bất kỳ thông báo nào sau 60s!");
-        string actualMessage = element.Text.Trim().TrimEnd('!');
-        Console.WriteLine($"✅ Actual Result: {actualMessage}");
-        Console.WriteLine($"✅ Thông báo mong đợi: {thongBao}");
-
-        if (!actualMessage.Equals(thongBao, StringComparison.OrdinalIgnoreCase))
-        {
-            status = "Fail";
+            ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, actualResult);
         }
         else
         {
-            status = "Pass";
-        }
+            // Kiểm tra thông báo validate (ví dụ: Vui lòng không bỏ trống!)
+            var validateElements = driver.FindElements(By.XPath("//div[@class='ant-form-item-explain-error']"));
+            if (validateElements.Count > 0)
+            {
+                actualResult = validateElements.First().Text.Trim();
+                Console.WriteLine($"✅ Actual Result: {actualResult}");
+                status = "Pass";
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, actualResult);
 
-        // Sau khi xác nhận thông báo, chuyển hướng về màn hình chính
-        if (element != null && element.Displayed)
-        {   
-            IWebElement logo = driver.FindElement(By.XPath("//img[@alt='logo']"));
-            logo.Click();
-            Thread.Sleep(2000);
+            }
+            else
+            {
+                // Nếu không có lỗi nào, bắt thông báo thành công
+                WebDriverWait waitMessage = new WebDriverWait(driver, TimeSpan.FromSeconds(60));
+                IWebElement element = waitMessage.Until(drv =>
+                {
+                    try
+                    {
+                        var elements = drv.FindElements(By.XPath("//div[contains(@class, 'ant-message-notice-content')]//span[2]"));
+                        return elements.FirstOrDefault(el => el.Displayed);
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        return null;
+                    }
+                });
 
-            WebDriverWait waitXemThem = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
-            IWebElement xemThemSanPham = waitXemThem.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//span[contains(text(),'Xem thêm sản phẩm')]")));
-            xemThemSanPham.Click();
-            Thread.Sleep(5000);
-                    
-            IWebElement searchProduct = driver.FindElement(By.XPath("//input[@placeholder='Tìm kiếm... ']"));
-            searchProduct.SendKeys(testFields[0]);
-            Thread.Sleep(4000);
+                Assert.That(element, Is.Not.Null, "Không tìm thấy bất kỳ thông báo nào sau 60s!");
+                actualResult = element.Text.Trim().TrimEnd('!');
+                Console.WriteLine($"✅ Actual Result: {actualResult}");
+                Console.WriteLine($"✅ Thông báo mong đợi: {thongBao}");
+                
+                if (!actualResult.Equals(thongBao, StringComparison.OrdinalIgnoreCase))
+                {
+                    status = "Fail";
+                }
+                else
+                {
+                    status = "Pass";
+                }
+
+                // Sau khi xác nhận thông báo, chuyển hướng về màn hình chính
+                if (element != null && element.Displayed)
+                {   
+                    // Gán lại status = "Pass" nếu cần (ở đây đã được xử lý ở trên)
+                    IWebElement logo = driver.FindElement(By.XPath("//img[@alt='logo']"));
+                    logo.Click();
+                    Thread.Sleep(4000);
+
+                    WebDriverWait waitXemThem = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+                    IWebElement xemThemSanPham = waitXemThem.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//span[contains(text(),'Xem thêm sản phẩm')]")));
+                    xemThemSanPham.Click();
+                    Thread.Sleep(5000);
+                            
+                    IWebElement searchProduct = driver.FindElement(By.XPath("//input[@placeholder='Tìm kiếm... ']"));
+                    searchProduct.SendKeys(testFields[0]);
+                    Thread.Sleep(4000);
+                }
+            }
         }
     }
     catch (Exception ex)
@@ -235,8 +240,6 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
     }
     ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status);
 }
-
-
 
 
 
@@ -339,7 +342,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
                 Thread.Sleep(6000);
                 Console.WriteLine("✅ Đã chuyển sang trang 'Xem thêm sản phẩm'.");
                 Console.WriteLine("Test result: " + excelMessage);
-                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, excelMessage);
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Thêm sản phẩm thành công");
                 return;
             }
 
@@ -349,7 +352,7 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
                 Thread.Sleep(2000);
                 string failMessage = "Giá sản phẩm phải là một số hợp lệ và lớn hơn 0.";
                 Console.WriteLine("Test result: " + failMessage);
-                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, failMessage);
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Giá sản phẩm phải là một số hợp lệ và lớn hơn 0.");
                 return;
             }
     }
@@ -619,18 +622,20 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
                 }
         }
 
-        [Test]
+    [Test]
         public void Test_TimKiemSanPhamBangMa()
         {
             string testCaseID = "ID_QLSANPHAM_11";
             string status = "Fail";
             try
             {
+                // Lấy dữ liệu test từ file Excel: dòng 90, cột 6 của sheet "TestCase Anh Khôi"
+                string testData_Search = ReadTestDataFromExcel.ReadDataRangeFromExcel("TestCase Anh Khôi", 90, 90, 6);
                 
                 Thread.Sleep(6000);
                 driver.FindElement(By.XPath("//th[1]//div[1]//span[2]//span[1]//*[name()='svg']")).Click();
                 Thread.Sleep(2000);
-                driver.FindElement(By.XPath("//input[@placeholder='Search key']")).SendKeys("6734167b494d02e6fab57ea2");
+                driver.FindElement(By.XPath("//input[@placeholder='Search key']")).SendKeys(testData_Search);
                 Thread.Sleep(2000);
                 driver.FindElement(By.XPath("//span[normalize-space()='Search']")).Click();
                 Thread.Sleep(3000);
@@ -641,77 +646,87 @@ public void Test_ThemSanPham(String testCaseID, String thongBao)
                 Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
                 status = "Fail";
             }
-               if (status == "Pass")
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động chính xác");
-                }
-                else
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động không chính xác");
-                }
+            
+            if (status == "Pass")
+            {
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động chính xác");
+            }
+            else
+            {
+                ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động không chính xác");
+            }
         }
 
-        [Test]
-        public void Test_TimKiemSanPhamBangTen()
-        {
-            string testCaseID = "ID_QLSANPHAM_12";
-            string status = "Fail";
-            try
-            {
-                Thread.Sleep(6000);
-                driver.FindElement(By.XPath("//th[@aria-label='Tên sản phẩm']//span[@aria-label='search']//*[name()='svg']")).Click();
-                Thread.Sleep(2000);
-                driver.FindElement(By.XPath("//input[@placeholder='Search name']")).SendKeys("iPhone 15 | 128GB | Đen");
-                Thread.Sleep(2000);
-                driver.FindElement(By.XPath("//span[normalize-space()='Search']")).Click();
-                Thread.Sleep(3000);
-                status = "Pass";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
-                status = "Fail";
-            }
-             if (status == "Pass")
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động chính xác");
-                }
-                else
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động không chính xác");
-                }
-        }
+     [Test]
+public void Test_TimKiemSanPhamBangTen()
+{
+    string testCaseID = "ID_QLSANPHAM_12";
+    string status = "Fail";
+    try
+    {
+        // Đọc dữ liệu test từ Excel: dòng 102, cột 6 của sheet "TestCase Anh Khôi"
+        string testData_Search = ReadTestDataFromExcel.ReadDataRangeFromExcel("TestCase Anh Khôi", 102, 102, 6);
+        
+        Thread.Sleep(6000);
+        driver.FindElement(By.XPath("//th[@aria-label='Tên sản phẩm']//span[@aria-label='search']//*[name()='svg']")).Click();
+        Thread.Sleep(2000);
+        driver.FindElement(By.XPath("//input[@placeholder='Search name']")).SendKeys(testData_Search);
+        Thread.Sleep(2000);
+        driver.FindElement(By.XPath("//span[normalize-space()='Search']")).Click();
+        Thread.Sleep(3000);
+        status = "Pass";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
+        status = "Fail";
+    }
+    
+    if (status == "Pass")
+    {
+        ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động chính xác");
+    }
+    else
+    {
+        ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động không chính xác");
+    }
+}
 
         [Test]
-        public void Test_TimKiemSanPhamBangTheLoai()
-        {
-            string testCaseID = "ID_QLSANPHAM_13";
-            string status = "Fail";
-            try
-            {
-                Thread.Sleep(6000);
-                driver.FindElement(By.XPath("//th[4]//div[1]//span[2]//span[1]//*[name()='svg']")).Click();
-                Thread.Sleep(2000);
-                driver.FindElement(By.XPath("//input[@placeholder='Search type']")).SendKeys("Apple");
-                Thread.Sleep(2000);
-                driver.FindElement(By.XPath("//span[normalize-space()='Search']")).Click();
-                Thread.Sleep(3000);
-                status = "Pass";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
-                status = "Fail";
-            }
-              if (status == "Pass")
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động chính xác");
-                }
-                else
-                {
-                    ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động không chính xác");
-                }
-        }
+public void Test_TimKiemSanPhamBangTheLoai()
+{   
+    string testCaseID = "ID_QLSANPHAM_13";
+    string status = "Fail";
+    try
+    {
+        // Đọc dữ liệu test từ Excel: dòng 114, cột 6 của sheet "TestCase Anh Khôi"
+        string testData_Search = ReadTestDataFromExcel.ReadDataRangeFromExcel("TestCase Anh Khôi", 114, 114, 6);
+        
+        Thread.Sleep(6000);
+        driver.FindElement(By.XPath("//th[4]//div[1]//span[2]//span[1]//*[name()='svg']")).Click();
+        Thread.Sleep(2000);
+        driver.FindElement(By.XPath("//input[@placeholder='Search type']")).SendKeys(testData_Search);
+        Thread.Sleep(2000);
+        driver.FindElement(By.XPath("//span[normalize-space()='Search']")).Click();
+        Thread.Sleep(3000);
+        status = "Pass";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ {testCaseID} Lỗi: {ex.Message}");
+        status = "Fail";
+    }
+    
+    if (status == "Pass")
+    {
+        ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động chính xác");
+    }
+    else
+    {
+        ExcelReportHelper_Khoi.WriteToExcel("TestCase Anh Khôi", testCaseID, status, "Tìm kiếm hoạt động không chính xác");
+    }
+}
+
 
         [Test]
         public void Test_SapXepGia()
