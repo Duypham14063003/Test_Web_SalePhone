@@ -19,6 +19,23 @@ namespace test_salephone.PageObjects
         private readonly By productToSelect = By.XPath("//div[contains(@class, 'sc-cEzcPc') and contains(text(), 'iPhone 15')]");
         private readonly By addToCartButton = By.XPath("//button[contains(@class, 'ant-btn-primary') and contains(., 'Thêm vào giỏ hàng')]");
         private readonly By clickaddToCartButton = By.XPath("//button[contains(@class, 'ant-btn-primary')]//span[contains(text(), 'Thêm vào giỏ hàng')]");
+
+
+        //------------------------Chọn vào checkbox cuối cùng được thêm vào
+        //-------------------------Mua hàng
+        //--------------- Xác nhận mua hàng
+        //--------------------Đếm sp trong giỏ hàng 
+        //--------------------Thêm sp vào gior hàng 
+        //----------------Tìm và click sp theo tên 
+        //-------------Mua hàng nhưng không xác nhận 
+        //-------------Click vào nút mua hàng đầu tiên 
+        //-------------Chuyển đến home để hủy bỏ mua hàng 
+
+
+
+
+
+
         public CheckCart(IWebDriver driver)
         {
             this.driver = driver;
@@ -37,6 +54,8 @@ namespace test_salephone.PageObjects
             return products.Count > 0;
         }
 
+
+        //------------------------Chọn vào checkbox cuối cùng được thêm vào
         public void SelectLatestProduct()
         {
             var checkboxes = driver.FindElements(productCheckbox);
@@ -46,53 +65,56 @@ namespace test_salephone.PageObjects
             }
         }
 
+
+
+        //-------------------------Mua hàng
         public void BuyProduct()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
             int beforeBuyCount = GetCartItemCount();
-            Console.WriteLine($"📦 Trước khi mua: {beforeBuyCount} sản phẩm.");
+            Console.WriteLine($"Trước khi mua: {beforeBuyCount} sản phẩm.");
 
             if (driver.FindElements(firstBuyButton).Count > 0)
             {
                 driver.FindElement(firstBuyButton).Click();
-                Console.WriteLine("✅ Đã click vào nút Mua Hàng đầu tiên.");
+                Console.WriteLine("Đã click vào nút Mua Hàng đầu tiên.");
 
                 wait.Until(ExpectedConditions.ElementExists(lastBuyButton));
 
                 if (driver.FindElements(lastBuyButton).Count > 0)
                 {
                     driver.FindElement(lastBuyButton).Click();
-                    Console.WriteLine("✅ Đã click vào nút Mua Hàng cuối cùng.");
+                    Console.WriteLine("Đã click vào nút Mua Hàng cuối cùng.");
 
                     Thread.Sleep(3000);
 
                     int afterBuyCount = GetCartItemCount();
-                    Console.WriteLine($"📦 Sau khi mua: {afterBuyCount} sản phẩm.");
+                    Console.WriteLine($"Sau khi mua: {afterBuyCount} sản phẩm.");
 
                     if (afterBuyCount == beforeBuyCount - 1)
                     {
-                        Console.WriteLine("✅ Sản phẩm đã được mua thành công! Giỏ hàng giảm 1 sản phẩm.");
+                        Console.WriteLine("Sản phẩm đã được mua thành công! Giỏ hàng giảm 1 sản phẩm.");
                     }
                     else
                     {
-                        Console.WriteLine("❌ Sản phẩm không giảm trong giỏ hàng sau khi mua.");
+                        Console.WriteLine("Sản phẩm không giảm trong giỏ hàng sau khi mua.");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("❌ Không tìm thấy nút Mua Hàng cuối cùng.");
+                    Console.WriteLine("Không tìm thấy nút Mua Hàng cuối cùng.");
                 }
             }
             else
             {
-                Console.WriteLine("❌ Không tìm thấy nút Mua Hàng đầu tiên.");
+                Console.WriteLine("Không tìm thấy nút Mua Hàng đầu tiên.");
             }
         }
 
 
 
-
+        //--------------- Xác nhận mua hàng
         public void ClickLastBuyButtonOnly()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
@@ -103,38 +125,39 @@ namespace test_salephone.PageObjects
                 {
                     IWebElement lastBtn = wait.Until(ExpectedConditions.ElementToBeClickable(lastBuyButton));
                     lastBtn.Click();
-                    Console.WriteLine("✅ Đã click vào nút Mua Hàng cuối cùng.");
+                    Console.WriteLine("Đã click vào nút Mua Hàng cuối cùng.");
                     Thread.Sleep(3000);
                 }
                 else
                 {
-                    Console.WriteLine("❌ Không tìm thấy nút Mua Hàng cuối cùng.");
+                    Console.WriteLine("Không tìm thấy nút Mua Hàng cuối cùng.");
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"❌ Lỗi khi click vào nút Mua Hàng cuối cùng: {e.Message}");
+                Console.WriteLine($"Lỗi khi click vào nút Mua Hàng cuối cùng: {e.Message}");
             }
         }
 
-
+        //--------------------Đếm sp trong giỏ hàng 
         public int GetCartItemCount()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
             IWebElement cartBtn = wait.Until(ExpectedConditions.ElementToBeClickable(cartButton));
             cartBtn.Click();
-            Console.WriteLine("🛒 Đã mở giỏ hàng.");
+            Console.WriteLine("Đã mở giỏ hàng.");
 
             Thread.Sleep(2000);
 
             int productCount = driver.FindElements(productInCart).Count;
-            Console.WriteLine($"🔍 Giỏ hàng có {productCount} sản phẩm.");
+            Console.WriteLine($"Giỏ hàng có {productCount} sản phẩm.");
 
             return productCount;
         }
 
 
 
+        //--------------------Thêm sp vào gior hàng 
         public void AddProductToCart()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
@@ -143,34 +166,31 @@ namespace test_salephone.PageObjects
             IWebElement product = wait.Until(ExpectedConditions.ElementExists(productToSelect));
 
             ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", product);
-            Thread.Sleep(1500); // Đợi một chút để đảm bảo phần tử đã cuộn vào tầm nhìn
+            Thread.Sleep(1500); 
 
             product.Click();
             Thread.Sleep(2500);
 
 
             var buttons = driver.FindElements(clickaddToCartButton);
-            Console.WriteLine($"🔍 Tìm thấy {buttons.Count} nút clickaddToCartButton.");
+            Console.WriteLine($"Tìm thấy {buttons.Count} nút clickaddToCartButton.");
 
             if (buttons.Count > 0)
             {
                 buttons[0].Click();
-                Console.WriteLine("✅ Đã click vào nút thêm vào giỏ hàng.");
+                Console.WriteLine("Đã click vào nút thêm vào giỏ hàng.");
             }
             else
             {
-                Console.WriteLine("❌ Không tìm thấy nút clickaddToCartButton.");
+                Console.WriteLine("Không tìm thấy nút clickaddToCartButton.");
             }
-
-
-
 
             Thread.Sleep(1500);
         }
 
 
 
-
+        //----------------Tìm và click sp theo tên 
         public void FindAndClickProductByName(string productName)
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
@@ -192,19 +212,19 @@ namespace test_salephone.PageObjects
 
 
                 product.Click();
-                Console.WriteLine($"✅ Đã click vào sản phẩm: {productName}");
+                Console.WriteLine($"Đã click vào sản phẩm: {productName}");
 
                 AddProductToCartAndBuy();
             }
             catch (Exception e)
             {
-                Console.WriteLine($"❌ Không tìm thấy sản phẩm: {productName}");
+                Console.WriteLine($"Không tìm thấy sản phẩm: {productName}");
             }
         }
 
 
 
-
+        //-------------Mua hàng nhưng không xác nhận 
         public void AddProductToCartAndBuy()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
@@ -215,12 +235,12 @@ namespace test_salephone.PageObjects
             {
                 IWebElement addToCartBtn = wait.Until(ExpectedConditions.ElementToBeClickable(addToCartButton));
                 addToCartBtn.Click();
-                Console.WriteLine("✅ Đã thêm sản phẩm vào giỏ hàng.");
+                Console.WriteLine("Đã thêm sản phẩm vào giỏ hàng.");
                 Thread.Sleep(2000);
             }
             catch (Exception e)
             {
-                Console.WriteLine("❌ Không tìm thấy nút 'Thêm vào giỏ hàng'.");
+                Console.WriteLine("Không tìm thấy nút 'Thêm vào giỏ hàng'.");
                 return;
             }
 
@@ -234,6 +254,7 @@ namespace test_salephone.PageObjects
         }
 
 
+        //-------------Click vào nút mua hàng đầu tiên 
         public void ClickFirstBuyButtonOnly()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
@@ -244,22 +265,22 @@ namespace test_salephone.PageObjects
                 {
                     IWebElement firstBtn = wait.Until(ExpectedConditions.ElementToBeClickable(firstBuyButton));
                     firstBtn.Click();
-                    Console.WriteLine("✅ Đã click vào nút Mua Hàng đầu tiên.");
+                    Console.WriteLine("Đã click vào nút Mua Hàng đầu tiên.");
                     Thread.Sleep(3000);
                 }
                 else
                 {
-                    Console.WriteLine("❌ Không tìm thấy nút Mua Hàng đầu tiên.");
+                    Console.WriteLine("Không tìm thấy nút Mua Hàng đầu tiên.");
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"❌ Lỗi khi click vào nút Mua Hàng đầu tiên: {e.Message}");
+                Console.WriteLine($"Lỗi khi click vào nút Mua Hàng đầu tiên: {e.Message}");
             }
         }
 
 
-
+        //-------------Chuyển đến home để hủy bỏ mua hàng 
         public void ClickLogoToGoToHomePage()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));

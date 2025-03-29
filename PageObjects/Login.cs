@@ -32,20 +32,17 @@ namespace TestProject.PageObjects
 
         public void ClickLoginButton()
         {
-            Console.WriteLine("🖱️ Đang click vào nút đăng nhập...");
             var button = wait.Until(ExpectedConditions.ElementIsVisible(loginButton));
             wait.Until(ExpectedConditions.ElementToBeClickable(loginButton)).Click();
-            Console.WriteLine("✅ Đã click vào nút đăng nhập.");
 
             System.Threading.Thread.Sleep(3000);
-            Console.WriteLine($"🔍 URL sau khi đăng nhập: {driver.Url}");
         }
 
 
         public bool IsLoginSuccessful()
         {
             bool isLoggedIn = !driver.Url.Contains("sign-in");
-            Console.WriteLine(isLoggedIn ? "🎉 Đăng nhập thành công!" : "❌ Đăng nhập thất bại.");
+            Console.WriteLine(isLoggedIn ? "Đăng nhập thành công!" : "Đăng nhập thất bại.");
             return isLoggedIn;
         }
     }
