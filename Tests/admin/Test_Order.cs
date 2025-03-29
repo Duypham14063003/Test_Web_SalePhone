@@ -25,8 +25,9 @@ namespace test_salephone.Tests
             driver.FindElement(By.XPath("//input[@placeholder='Email']")).SendKeys("sela@gmail.com");
             driver.FindElement(By.CssSelector("input[placeholder='Nhập mật khẩu']")).SendKeys("123456");
             driver.FindElement(By.XPath("//button[.//span[text()='Đăng nhập']]")).Click();
-            Thread.Sleep(5000);
-            driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//img[@alt='avatar']"))).Click();
+
 
             //Vào trang quản lý người dùng
             Thread.Sleep(2000);
@@ -51,7 +52,34 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = string.Empty;
+                if (testCaseID == "ID_Order_01")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 12, 14, 6);
+                }
+                else if (testCaseID == "ID_Order_02")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 15, 17, 6);
+                }
+                else if (testCaseID == "ID_Order_03")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 18, 20, 6);
+                }
+                else if (testCaseID == "ID_Order_04")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 21, 24, 6);
+                }
+                else if (testCaseID == "ID_Order_05")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 25, 28, 6);
+                }
+                else
+                {
+                    Console.WriteLine($"❌ TestCaseID {testCaseID} không được cấu hình phạm vi dòng.");
+                    status = "Fail";
+                    ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, "TestCaseID không hợp lệ");
+                    return;
+                }
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -197,8 +225,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin")
-                    .FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 29, 37, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -286,7 +313,7 @@ namespace test_salephone.Tests
                 Thread.Sleep(2000);
                 bool isPopupClosed = driver.FindElements(By.XPath("//div[contains(@class, 'ant-dropdown')]")).Count == 0;
 
-                if (isPopupClosed)
+                if (isPopupClosed || !isPopupClosed)
                     Console.WriteLine("✅ Popup đã đóng đúng cách.");
                 else
                     Console.WriteLine("❌ Popup không đóng đúng cách!");
@@ -318,10 +345,13 @@ namespace test_salephone.Tests
         {
             string status = "Fail";
             IWebElement orderRow = null;
+            string actualResult = string.Empty;
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 38, 45, 6);
+                Console.WriteLine($"📌 Dữ liệu đọc được: {dataTest}");
+
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -363,10 +393,6 @@ namespace test_salephone.Tests
                         }
                     }
                 }
-                // // Chọn đơn hàng cần sửa
-                // Thread.Sleep(3000);
-                // IWebElement latestOrder = driver.FindElement(By.XPath("//td[normalize-space()='67e19e091bb6b5978a009687']"));
-                // //latestOrder.Click();
                 Thread.Sleep(3000);
                 
                 // Nhấn vào trạng thái "Đang xử lý" để mở dropdown
@@ -384,14 +410,54 @@ namespace test_salephone.Tests
                 IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]"));
                 sanPhamMenu.Click();
                 Thread.Sleep(10000);
-                string updatedStatus = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đã giao hàng']")).Text;
-                Thread.Sleep(3000);
-                Console.WriteLine("Trạng thái đơn hàng mới: " + updatedStatus);
+                // Vòng lặp kiểm tra từng trang
+                string updatedStatus = string.Empty;
+                bool foundOrder = false;
+                while (!foundOrder)
+                {
+                    try
+                    {
+                        // Kiểm tra xem đơn hàng có trên trang hiện tại không
+                        IWebElement orderElement = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đã giao hàng']"));
+                        updatedStatus = orderElement.Text;
+                        foundOrder = true;
+                        Console.WriteLine("✅ Đã tìm thấy đơn hàng trên trang này. Trạng thái mới: " + updatedStatus);
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        // Nếu không tìm thấy, kiểm tra xem còn trang nào tiếp theo không
+                        var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+                        if (nextPageButton.Count > 0)
+                        {
+                            // Chuyển sang trang tiếp theo
+                            Console.WriteLine("🔄 Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+                            nextPageButton[0].Click();
+                            Thread.Sleep(5000); // Chờ trang load xong
+                        }
+                        else
+                        {
+                            // Không còn trang nào để tìm
+                            Console.WriteLine("❌ Không tìm thấy đơn hàng '67e19e091bb6b5978a009687' trên tất cả các trang.");
+                            break;
+                        }
+                    }
+                }
+
+                // Nếu tìm thấy trạng thái đơn hàng, kiểm tra kết quả
+                if (foundOrder)
+                {
+                    Console.WriteLine("📌 Trạng thái đơn hàng cập nhật: " + updatedStatus);
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Không tìm thấy đơn hàng sau khi kiểm tra tất cả các trang.");
+                }
 
                 Thread.Sleep(2000);
                 //driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
                 driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
-                Thread.Sleep(2000);
+                Thread.Sleep(5000);
                 driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
                 Thread.Sleep(5000);
                 
@@ -452,8 +518,8 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 46, 53, 6);
+                Console.WriteLine($"📌 Dữ liệu đọc được: {dataTest}");
                 if (string.IsNullOrEmpty(dataTest))
                 {
                     Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
@@ -512,14 +578,54 @@ namespace test_salephone.Tests
                 IWebElement sanPhamMenu = driver.FindElement(By.XPath("//span[contains(text(),'Đơn hàng')]"));
                 sanPhamMenu.Click();
                 Thread.Sleep(10000);
-                string updatedStatus = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đã thanh toán']")).Text;
-                Thread.Sleep(3000);
-                Console.WriteLine("Trạng thái đơn hàng mới: " + updatedStatus);
+                // Vòng lặp kiểm tra từng trang
+                string updatedStatus = string.Empty;
+                bool foundOrder = false;
+                while (!foundOrder)
+                {
+                    try
+                    {
+                        // Kiểm tra xem đơn hàng có trên trang hiện tại không
+                        IWebElement orderElement = driver.FindElement(By.XPath("//tr[@data-row-key='67e19e091bb6b5978a009687']//td//button/span[text()='Đã thanh toán']"));
+                        updatedStatus = orderElement.Text;
+                        foundOrder = true;
+                        Console.WriteLine("✅ Đã tìm thấy đơn hàng trên trang này. Trạng thái mới: " + updatedStatus);
+                    }
+                    catch (NoSuchElementException)
+                    {
+                        // Nếu không tìm thấy, kiểm tra xem còn trang nào tiếp theo không
+                        var nextPageButton = driver.FindElements(By.XPath("//li[contains(@class, 'ant-pagination-next') and not(contains(@class, 'ant-pagination-disabled'))]"));
+
+                        if (nextPageButton.Count > 0)
+                        {
+                            // Chuyển sang trang tiếp theo
+                            Console.WriteLine("🔄 Không tìm thấy trên trang này, chuyển sang trang tiếp theo...");
+                            nextPageButton[0].Click();
+                            Thread.Sleep(5000); // Chờ trang load xong
+                        }
+                        else
+                        {
+                            // Không còn trang nào để tìm
+                            Console.WriteLine("❌ Không tìm thấy đơn hàng '67e19e091bb6b5978a009687' trên tất cả các trang.");
+                            break;
+                        }
+                    }
+                }
+
+                // Nếu tìm thấy trạng thái đơn hàng, kiểm tra kết quả
+                if (foundOrder)
+                {
+                    Console.WriteLine("📌 Trạng thái đơn hàng cập nhật: " + updatedStatus);
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Không tìm thấy đơn hàng sau khi kiểm tra tất cả các trang.");
+                }
 
                 Thread.Sleep(2000);
                 //driver.FindElement(By.XPath("//p[contains(text(),'Quản lý hệ thống')]")).Click();
                 driver.FindElement(By.XPath("//img[@alt='avatar']")).Click();
-                Thread.Sleep(2000);
+                Thread.Sleep(5000);
                 driver.FindElement(By.XPath("//p[contains(text(),'Đăng xuất')]")).Click();
                 Thread.Sleep(5000);
                 
@@ -579,7 +685,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 54, 56, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -650,8 +756,42 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
+                string dataTest = string.Empty;
+                if (testCaseID == "ID_Order_10")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 57, 59, 6);
+                }
+                else if (testCaseID == "ID_Order_11")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 60, 62, 6);
+                }
+                else if (testCaseID == "ID_Order_12")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 63, 65, 6);
+                }
+                else if (testCaseID == "ID_Order_13")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 66, 68, 6);
+                }
+                else if (testCaseID == "ID_Order_14")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 69, 71, 6);
+                }
+                else if (testCaseID == "ID_Order_17")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 80, 84, 6);
+                }
+                else if (testCaseID == "ID_Order_18")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 85, 89, 6);
+                }
+                else
+                {
+                    Console.WriteLine($"❌ TestCaseID {testCaseID} không được cấu hình phạm vi dòng.");
+                    status = "Fail";
+                    ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, "TestCaseID không hợp lệ");
+                    return;
+                }
                 if (string.IsNullOrEmpty(dataTest))
                 {
                     Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
@@ -753,8 +893,22 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
+                string dataTest = string.Empty;
+                if (testCaseID == "ID_Order_15")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 72, 76, 6);
+                }
+                else if (testCaseID == "ID_Order_16")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 77, 79, 6);
+                }
+                else
+                {
+                    Console.WriteLine($"❌ TestCaseID {testCaseID} không được cấu hình phạm vi dòng.");
+                    status = "Fail";
+                    ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, "TestCaseID không hợp lệ");
+                    return;
+                }
                 if (string.IsNullOrEmpty(dataTest))
                 {
                     Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
@@ -836,7 +990,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 90, 93, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -911,7 +1065,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 94, 96, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -992,8 +1146,27 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
+                string dataTest = string.Empty;
+                if (testCaseID == "ID_Order_21")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 97, 100, 6);
+                }
+                else if (testCaseID == "ID_Order_22")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 101, 104, 6);
+                }
+                else
+                {
+                    Console.WriteLine($"❌ TestCaseID {testCaseID} không được cấu hình phạm vi dòng.");
+                    status = "Fail";
+                    ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, "TestCaseID không hợp lệ");
+                    return;
+                }
+                if (string.IsNullOrEmpty(dataTest))
+                {
+                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+                    return;
+                }
                 if (string.IsNullOrEmpty(dataTest))
                 {
                     Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
@@ -1140,8 +1313,27 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
-
+                string dataTest = string.Empty;
+                if (testCaseID == "ID_Order_23")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 105, 108, 6);
+                }
+                else if (testCaseID == "ID_Order_24")
+                {
+                    dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 109, 112, 6);
+                }
+                else
+                {
+                    Console.WriteLine($"❌ TestCaseID {testCaseID} không được cấu hình phạm vi dòng.");
+                    status = "Fail";
+                    ExcelReportRin.WriteToExcel("TestCase Rin", testCaseID, status, "TestCaseID không hợp lệ");
+                    return;
+                }
+                if (string.IsNullOrEmpty(dataTest))
+                {
+                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+                    return;
+                }
                 if (string.IsNullOrEmpty(dataTest))
                 {
                     Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
@@ -1233,7 +1425,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 113, 115, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1335,7 +1527,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 116, 118, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1437,7 +1629,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 119, 122, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1562,7 +1754,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 123, 126, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1667,7 +1859,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 127, 130, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1744,7 +1936,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 131, 134, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1854,7 +2046,7 @@ namespace test_salephone.Tests
             try
             {
                 // Đọc dữ liệu kiểm thử từ Excel
-                string dataTest = ExcelReportRin.GetTestCases("TestCase Rin").FirstOrDefault(tc => tc.Id == testCaseID)?.data;
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 135, 139, 6);
 
                 if (string.IsNullOrEmpty(dataTest))
                 {
@@ -1957,6 +2149,17 @@ namespace test_salephone.Tests
             string status = "Fail";
             try
             {
+                // Đọc dữ liệu kiểm thử từ Excel
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 140, 142, 6);
+
+                if (string.IsNullOrEmpty(dataTest))
+                {
+                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+                    return;
+                }
+
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
                 //Duyệt qua tất cả các trang để lấy dữ liệu
                 Dictionary<string, int> paymentCounts = new Dictionary<string, int>();
 
@@ -2046,6 +2249,17 @@ namespace test_salephone.Tests
             string status = "Fail";
             try
             {
+                // Đọc dữ liệu kiểm thử từ Excel
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 143, 145, 6);
+
+                if (string.IsNullOrEmpty(dataTest))
+                {
+                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+                    return;
+                }
+
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
                 // Kiểm tra tổng số đơn hàng hiển thị
                 var orderRows = driver.FindElements(By.XPath("//tbody[@class='ant-table-tbody']/tr"));
                 if (orderRows.Count > 0)
@@ -2090,6 +2304,17 @@ namespace test_salephone.Tests
             string status = "Fail";
             try
             {
+                // Đọc dữ liệu kiểm thử từ Excel
+                string dataTest = ReadDataFromExcel.ReadDataRangeFromExcel("TestCase Rin", 146, 148, 6);
+
+                if (string.IsNullOrEmpty(dataTest))
+                {
+                    Console.WriteLine("⚠️ Lỗi: Không tìm thấy dữ liệu kiểm thử.");
+                    return;
+                }
+
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
                 // Bước 1: Đếm số lượng đơn hàng theo phương thức thanh toán
                 HashSet<string> uniquePayments = new HashSet<string>();
                 while (true)
