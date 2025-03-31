@@ -5,7 +5,7 @@ using System;
 
 namespace TestProject.PageObjects
 {
-    public class LoginPage : TestBase
+    public class LoginPage
     {
         private readonly IWebDriver driver;
         private readonly WebDriverWait wait;
