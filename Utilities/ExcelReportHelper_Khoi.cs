@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 using ClosedXML.Excel;
@@ -10,7 +9,7 @@ namespace test_salephone.Utilities
     // Định nghĩa lớp TestCase chứa các thuộc tính cần thiết
 
 
-    public class ExcelReportHelper
+    public class ExcelReportHelper_Khoi
     {
         public class TestCase
         {
@@ -94,7 +93,7 @@ namespace test_salephone.Utilities
         public static IEnumerable<object[]> GetTestCasesForNUnit()
         {
             // Sử dụng tên sheet cố định "testCase_Duy"
-            var testCases = GetTestCases("TestData_TKSP");
+            var testCases = GetTestCases("Testcase Anh Khôi");
             foreach (var testCase in testCases)
             {
                 yield return new object[] { testCase.Id, testCase.data };
