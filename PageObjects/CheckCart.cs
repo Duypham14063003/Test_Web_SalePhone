@@ -26,7 +26,7 @@ namespace test_salephone.PageObjects
 
         public void OpenCart()
         {
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(50));
             IWebElement cartBtn = wait.Until(ExpectedConditions.ElementToBeClickable(cartButton));
             cartBtn.Click();
         }
@@ -161,10 +161,6 @@ namespace test_salephone.PageObjects
             {
                 Console.WriteLine("❌ Không tìm thấy nút clickaddToCartButton.");
             }
-
-
-
-
             Thread.Sleep(1500);
         }
 

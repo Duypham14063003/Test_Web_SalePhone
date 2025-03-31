@@ -39,12 +39,12 @@ namespace test_salephone.Utilities
                     }
 
                     var row = worksheet.RowsUsed().Skip(8)
-                                       .FirstOrDefault(r => r.Cell(1).GetValue<string>().Trim() == numberTest.Trim());
+                                    .FirstOrDefault(r => r.Cell(2).GetValue<string>().Trim() == numberTest.Trim());
 
                     if (row != null)
                     {
-                        row.Cell(8).Value = actualResult; // Cập nhật Actual Result vào cột H
-                        row.Cell(9).Value = status;       // Cập nhật Status vào cột I
+                        row.Cell(9).Value = actualResult; // Cập nhật Actual Result vào cột H
+                        row.Cell(10).Value = status;       // Cập nhật Status vào cột I
 
                         workbook.SaveAs(filePath);
                         Console.WriteLine($"✅ Đã lưu file Excel");
