@@ -101,7 +101,7 @@ namespace MuaHang_Test
 
             Assert.That(result, log.ToString());
 
-            ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_1", result ? "Pass" : "Fail", log.ToString());
+            ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_1", result ? "Pass" : "Fail", log.ToString());
         }
 
         [Test]
@@ -165,12 +165,12 @@ namespace MuaHang_Test
             if (currentUrl == "https://frontend-salephones.vercel.app/orderSuccess")
             {
                 Console.WriteLine("Chuyển hướng đến trang orderSuccess thành công.");
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_2", "Fail", "Mua hàng và chuyển hướng đến trang orderSuccess thành công. Không thông báo giá mới cho người dùng.");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_2", "Fail", "Mua hàng và chuyển hướng đến trang orderSuccess thành công. Không thông báo giá mới cho người dùng.");
             }
             else
             {
                 Console.WriteLine("Chuyển hướng đến trang orderSuccess không thành công. URL hiện tại: " + currentUrl);
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_2", "Pass", "Không thể mua hàng do sản phẩm đã bị xóa");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_2", "Pass", "Không thể mua hàng do sản phẩm đã bị xóa");
             }
 
         }
@@ -246,12 +246,12 @@ namespace MuaHang_Test
             if (currentUrl == "https://frontend-salephones.vercel.app/orderSuccess")
             {
                 Console.WriteLine("Chuyển hướng đến trang orderSuccess thành công.");
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_3", "Fail", "Mua hàng và chuyển hướng đến trang orderSuccess thành công. Không thông báo giá mới cho người dùng.");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_3", "Fail", "Mua hàng và chuyển hướng đến trang orderSuccess thành công. Không thông báo giá mới cho người dùng.");
             }
             else
             {
                 Console.WriteLine("Chuyển hướng đến trang orderSuccess không thành công. URL hiện tại: " + currentUrl);
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_3", "Pass", "Mua hàng thất bại");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_3", "Pass", "Mua hàng thất bại");
             }
         }
 
@@ -307,12 +307,12 @@ namespace MuaHang_Test
             if (currentUrl == "https://frontend-salephones.vercel.app/orderSuccess")
             {
                 Console.WriteLine("Chuyển hướng đến trang orderSuccess thành công.");
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_4", "Fail", "Mua hàng và chuyển hướng đến trang orderSuccess thành công. /n Không kiểm tra số lượng sản phẩm tồn kho.");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_4", "Fail", "Mua hàng và chuyển hướng đến trang orderSuccess thành công. /n Không kiểm tra số lượng sản phẩm tồn kho.");
             }
             else
             {
                 Console.WriteLine("Chuyển hướng đến trang orderSuccess không thành công. URL hiện tại: " + currentUrl);
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_4", "Pass", "Mua hàng thất bại do không đủ sản phẩm");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_4", "Pass", "Mua hàng thất bại do không đủ sản phẩm");
             }
         }
 
@@ -345,11 +345,11 @@ namespace MuaHang_Test
 
             if (isProductInCart)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_5", "Pass", "Mua hàng không thành công");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_5", "Pass", "Mua hàng không thành công");
             }
             else
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_MuaHang_5", "Fail", "Mua hàng thành công");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_MuaHang_5", "Fail", "Mua hàng thành công");
             }
         }
 

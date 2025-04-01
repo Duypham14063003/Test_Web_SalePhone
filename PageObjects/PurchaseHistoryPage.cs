@@ -126,7 +126,7 @@ namespace test_salephone.PageObjects
 
             if (huyDonHangButtons.Count == 0)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "WARNING", "Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "WARNING", "Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
                 Console.WriteLine("Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
                 return;
             }

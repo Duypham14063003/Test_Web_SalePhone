@@ -6,7 +6,7 @@ using System.Linq;
 namespace test_salephone.Utilities
 {
 
-    public class ExcelReportHelper
+    public class ExcelReportHelper_Trân
     {
         public class TestCase
         {
