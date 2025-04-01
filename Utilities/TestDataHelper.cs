@@ -5,7 +5,7 @@ using ClosedXML.Excel;
 
 public class TestDataHelper
 {
-    private static readonly string filePath = @"D:\\BDCLPM.xlsx";
+    private static readonly string filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx"));
     private static readonly string sheetName = "TestData_Trân";
 
     public static Dictionary<string, string>? GetTestData(string testCaseId)

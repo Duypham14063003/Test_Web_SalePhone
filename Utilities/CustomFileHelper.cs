@@ -9,7 +9,7 @@ namespace test_salephone.Utilities
 {
     public static class CustomFileHelper
     {
-        private static string downloadPath = @"C:\Users\ngotr\Downloads";
+        private static string downloadPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
         public static FileInfo GetLatestExcelFile()
         {

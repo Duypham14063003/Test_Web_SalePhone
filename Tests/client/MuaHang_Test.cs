@@ -114,7 +114,7 @@ namespace MuaHang_Test
             string quantity = testData["Quantity"];
             string price = testData["Price"];
             string description = testData["Description"];
-            string firstImage = @"C:\Users\ngotr\Downloads\AnhSP.png";
+            string firstImage = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "assets", "AnhSP.png"));
 
             Console.WriteLine("Đăng nhập Admin...");
 
@@ -189,8 +189,9 @@ namespace MuaHang_Test
             string quantity = testData["Quantity"];
             string price = testData["Price"];
             string description = testData["Description"];
-            string newPrice = testData["ExtraField"];
-            string firstImage = @"C:\\Users\\ngotr\\Downloads\\AnhSP.png";
+            string newPrice = testData["ExtraField"]; 
+            string firstImage = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "assets", "AnhSP.png"));
+
 
             Console.WriteLine("Đăng nhập Admin...");
             ((IJavaScriptExecutor)driver).ExecuteScript("window.open();");

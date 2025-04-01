@@ -18,9 +18,8 @@ namespace test_salephone.Utilities
         private static string[] possiblePaths =
         {
             //cái file excel chỗ report tui xài không được nene tui đung đuongfw dẫn cứng
-            "D:\\BDCLPM.xlsx", 
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx")  
-        };
+            Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Report", "BDCLPM.xlsx"))
+    };
 
         // Chọn đường dẫn đầu tiên tồn tại, nếu không có, dùng đường dẫn cuối cùng
         private static string filePath = possiblePaths.FirstOrDefault(File.Exists) ?? possiblePaths.Last();
