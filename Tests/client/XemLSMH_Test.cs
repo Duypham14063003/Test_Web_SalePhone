@@ -66,7 +66,7 @@ namespace XemLSMH
             string status = "Pass";
             string message = "Thông tin chi tiết đơn hàng: " + orderDetails;
 
-            ExcelReportHelper.WriteToExcel(testCaseName, testCaseId, status, message);
+            ExcelReportHelper_Tran.WriteToExcel(testCaseName, testCaseId, status, message);
 
         }
 
@@ -93,7 +93,7 @@ namespace XemLSMH
 
                 if (!cancelButton.Displayed || !cancelButton.Enabled)
                 {
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", "Nút 'Hủy đơn hàng' không khả dụng.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", "Nút 'Hủy đơn hàng' không khả dụng.");
                     return;
                 }
 
@@ -111,16 +111,16 @@ namespace XemLSMH
 
                 if (orderStatus == "Đã hủy")
                 {
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Pass", "Trạng thái đơn hàng đã đổi thành 'Đã hủy'.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Pass", "Trạng thái đơn hàng đã đổi thành 'Đã hủy'.");
                 }
                 else
                 {
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", $"Trạng thái đơn hàng vẫn là '{orderStatus}', nút hủy không hoạt động.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", $"Trạng thái đơn hàng vẫn là '{orderStatus}', nút hủy không hoạt động.");
                 }
             }
             catch (NoSuchElementException)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", "Không tìm thấy đơn hàng hoặc nút hủy.");
+                ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", "Không tìm thấy đơn hàng hoặc nút hủy.");
             }
         }
 
@@ -149,16 +149,16 @@ namespace XemLSMH
                 if (cancelButton.Displayed && cancelButton.Enabled)
                 {
                     cancelButton.Click();
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Fail", "Nút 'Hủy đơn hàng' có thể click khi đơn hàng đã giao thành công.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Fail", "Nút 'Hủy đơn hàng' có thể click khi đơn hàng đã giao thành công.");
                 }
                 else
                 {
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Pass", "Nút 'Hủy đơn hàng' không thể click khi đơn hàng đã giao thành công.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Pass", "Nút 'Hủy đơn hàng' không thể click khi đơn hàng đã giao thành công.");
                 }
             }
             catch (NoSuchElementException)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "PASS", "Không có nút 'Hủy đơn hàng' khi đơn hàng đã giao thành công.");
+                ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "PASS", "Không có nút 'Hủy đơn hàng' khi đơn hàng đã giao thành công.");
             }
             catch (Exception ex)
             {
@@ -186,15 +186,15 @@ namespace XemLSMH
 
                 viewDetailsButton.Click();
 
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Pass", "Đã bấm vào 'Xem chi tiết' thành công.");
+                ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Pass", "Đã bấm vào 'Xem chi tiết' thành công.");
             }
             catch (WebDriverTimeoutException)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Fail", "Không thể tìm thấy nút 'Xem chi tiết' sau 10 giây.");
+                ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Fail", "Không thể tìm thấy nút 'Xem chi tiết' sau 10 giây.");
             }
             catch (Exception ex)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Fail", "Lỗi xảy ra: " + ex.Message);
+                ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Fail", "Lỗi xảy ra: " + ex.Message);
             }
         }
 
@@ -224,16 +224,16 @@ namespace XemLSMH
                 {
                     Console.WriteLine("File đã tải về: " + latestFile.FullName);
                     CustomFileHelper.OpenFile(latestFile);
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Pass", "Đã xuất file Excel và mở thành công.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Pass", "Đã xuất file Excel và mở thành công.");
                 }
                 else
                 {
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Fail", "Không tìm thấy file Excel.");
+                    ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Fail", "Không tìm thấy file Excel.");
                 }
             }
             catch (Exception ex)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Fail", "Lỗi: " + ex.Message);
+                ExcelReportHelper_Tran.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Fail", "Lỗi: " + ex.Message);
             }
         }
 
