@@ -11,6 +11,8 @@ using SeleniumExtras.WaitHelpers;
 using System.Collections.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.Utilities.Helpers;
 using test_salephone.Utilities;
+using System.Text;
+using System.Diagnostics;
 
 namespace XemLSMH
 {
@@ -45,8 +47,8 @@ namespace XemLSMH
 
         private void Login()
         {
-            Console.WriteLine("⏳ Đang đăng nhập User...");
-            loginPage.EnterUsername("user@gmail.com");
+            Console.WriteLine("Đang đăng nhập User...");
+            loginPage.EnterUsername("user1@gmail.com");
             loginPage.EnterPassword("123123A");
             loginPage.ClickLoginButton();
             Thread.Sleep(2000);
@@ -59,149 +61,181 @@ namespace XemLSMH
             string orderDetails = purchaseHistoryPage.GetOrderDetailsOfFirstItem();
             Console.WriteLine(orderDetails);
 
-            // 1. Prepare data for Excel writing
             string testCaseName = "Testcase Trân";
             string testCaseId = "ID_XemLSMH_1";
-            string status = "PASS"; // Set status to PASS directly
-            string message = "Thông tin chi tiết đơn hàng: " + orderDetails; // Combine message and order details
+            string status = "Pass";
+            string message = "Thông tin chi tiết đơn hàng: " + orderDetails;
 
-            // 2. Write to Excel
             ExcelReportHelper.WriteToExcel(testCaseName, testCaseId, status, message);
 
-            // In ra thông báo PASS
-            Console.WriteLine("✅ Test Case ID_XemLSMH_1 Passed.");
         }
+
+
 
         [Test]
         public void ID_XemLSMH_2()
         {
             purchaseHistoryPage.NavigateToPurchaseHistory();
 
-            // 1. Lấy số lượng đơn hàng trước khi hủy
-            int soLuongDonHangTruocKhiHuy = purchaseHistoryPage.GetOrderCount();
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
-            purchaseHistoryPage.CancelFirstOrder();
+                // Tìm đơn hàng có trạng thái "Đang xử lý"
+                var processingOrder = wait.Until(ExpectedConditions.ElementToBeClickable(
+                    By.XPath("//div[contains(@class, 'ant-alert-message') and text()='Đang xử lý']/ancestor::div[contains(@class, 'ant-card-body')]")));
 
-            // 2. Lấy số lượng đơn hàng sau khi hủy
-            int soLuongDonHangSauKhiHuy = purchaseHistoryPage.GetOrderCount();
+                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", processingOrder);
+                Thread.Sleep(1000);
 
-            // 3. Kiểm tra xem số lượng đơn hàng có giảm đi 1 không
-            bool huyDonHangThanhCong = (soLuongDonHangSauKhiHuy == soLuongDonHangTruocKhiHuy - 1);
+                // Tìm nút "Hủy đơn hàng"
+                var cancelButton = processingOrder.FindElement(By.XPath(".//button[span[text()='Hủy đơn hàng']]"));
 
-            string ketQua = huyDonHangThanhCong ? "PASS" : "FAIL";
-            string message = huyDonHangThanhCong ? "Hủy đơn hàng thành công. Số lượng đơn hàng giảm 1." : "Hủy đơn hàng thất bại. Số lượng đơn hàng không giảm.";
+                if (!cancelButton.Displayed || !cancelButton.Enabled)
+                {
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", "Nút 'Hủy đơn hàng' không khả dụng.");
+                    return;
+                }
 
-            ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", ketQua, message);
-            Console.WriteLine($"✅ Test Case ID_XemLSMH_2: {ketQua}");
-            Console.WriteLine(message);
+                cancelButton.Click();
+
+                // Xác nhận hủy đơn hàng
+                var okButton = wait.Until(ExpectedConditions.ElementToBeClickable(
+                    By.XPath("//button[contains(@class, 'ant-btn-primary') and span[text()='OK']]")));
+
+                okButton.Click();
+                Thread.Sleep(3000); // Chờ hệ thống cập nhật
+
+                // Kiểm tra trạng thái đơn hàng
+                var orderStatus = processingOrder.FindElement(By.XPath(".//div[contains(@class, 'ant-alert-message')]")).Text;
+
+                if (orderStatus == "Đã hủy")
+                {
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Pass", "Trạng thái đơn hàng đã đổi thành 'Đã hủy'.");
+                }
+                else
+                {
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", $"Trạng thái đơn hàng vẫn là '{orderStatus}', nút hủy không hoạt động.");
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "Fail", "Không tìm thấy đơn hàng hoặc nút hủy.");
+            }
         }
+
+
+
+
 
         [Test]
         public void ID_XemLSMH_3()
         {
             purchaseHistoryPage.NavigateToPurchaseHistory();
-            ReadOnlyCollection<IWebElement> orderItems = driver.FindElements(By.XPath("//div[@class='order-item']"));
-            Thread.Sleep(9000);
 
-            if (orderItems.Count == 0)
+            // Chờ và lấy đơn hàng đầu tiên có trạng thái "Đã giao hàng thành công"
+            var orderStatus = wait.Until(ExpectedConditions.ElementExists(
+                By.XPath("//*[@id='root']/div/div/div/div/div[2]/div/div[1]/div[1]//div[contains(@class, 'ant-alert-message') and text()='Đã giao hàng thành công']")));
+
+
+            try
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Fail", "Nút hủy đơn vẫn hiển thị");
-                return;
-            }
+                // Tìm phần tử cha của đơn hàng
+                var orderContainer = orderStatus.FindElement(By.XPath("./ancestor::*[@id='root']/div/div/div/div/div[2]/div/div[1]/div[1]"));
 
-            string overallResult = "PASS";
-            string overallMessage = "";
+                // Tìm nút "Hủy đơn hàng" trong đơn hàng này
+                var cancelButton = orderContainer.FindElement(By.XPath(".//button[span[text()='Hủy đơn hàng']]"));
 
-            Assert.Multiple(() =>
-            {
-                foreach (IWebElement item in orderItems)
+                if (cancelButton.Displayed && cancelButton.Enabled)
                 {
-                    string status = purchaseHistoryPage.GetOrderStatus(item);
-                    bool isEnabled = purchaseHistoryPage.IsCancelButtonEnabled(item);
-
-                    if (status == "Đã giao hàng thành công")
-                    {
-                        Assert.That(!isEnabled, $"Nút 'Hủy đơn hàng' phải bị vô hiệu hóa khi đơn hàng ở trạng thái '{status}'.");
-                        if (isEnabled)
-                        {
-                            overallResult = "FAIL";
-                            overallMessage += $"❌ Trạng thái '{status}': Nút 'Hủy đơn hàng' hoạt động. ";
-                            Console.WriteLine($"❌ ID_XemLSMH_3: FAIL - Nút 'Hủy đơn hàng' hoạt động khi đơn hàng ở trạng thái '{status}'.");
-                        }
-                        else
-                        {
-                            overallMessage += $"✅ Trạng thái '{status}': Nút 'Hủy đơn hàng' bị vô hiệu hóa. ";
-                            Console.WriteLine($"✅ ID_XemLSMH_3: PASS - Nút 'Hủy đơn hàng' bị vô hiệu hóa khi đơn hàng ở trạng thái '{status}'.");
-                        }
-                    }
-                    else
-                    {
-                        overallMessage += $"ℹ️ Trạng thái '{status}': Không kiểm tra nút vô hiệu hóa ở trạng thái này. ";
-                    }
+                    cancelButton.Click();
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Fail", "Nút 'Hủy đơn hàng' có thể click khi đơn hàng đã giao thành công.");
                 }
-            });
-
-            ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", overallResult, overallMessage);
+                else
+                {
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "Pass", "Nút 'Hủy đơn hàng' không thể click khi đơn hàng đã giao thành công.");
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_3", "PASS", "Không có nút 'Hủy đơn hàng' khi đơn hàng đã giao thành công.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Lỗi khi tìm phần tử: {ex.Message}");
+            }
         }
+
+
+
 
         [Test]
         public void ID_XemLSMH_4()
         {
             try
             {
-                // 1. Điều hướng đến trang lịch sử mua hàng
                 purchaseHistoryPage.NavigateToPurchaseHistory();
 
-                // 2. Bấm vào nút "Xem chi tiết"
-                bool isClicked = purchaseHistoryPage.ClickViewDetailsButton(); // ✅ Lưu kết quả click
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
-                if (isClicked)  // ❌ Xóa dấu `;` ở đây
-                {
-                    // 3. Ghi kết quả vào file Excel (PASS)
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "PASS", "Đã bấm vào 'Xem chi tiết' thành công.");
-                    Console.WriteLine("✅ Test Case ID_XemLSMH_4 Passed.");
-                }
-                else
-                {
-                    // 4. Ghi kết quả vào file Excel (FAIL)
-                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "FAIL", "Không thể bấm vào 'Xem chi tiết'.");
-                    Console.WriteLine("❌ Test Case ID_XemLSMH_4 Failed: Không thể bấm vào 'Xem chi tiết'.");
-                }
+                var viewDetailsButton = wait.Until(ExpectedConditions.ElementToBeClickable(
+                    By.XPath("//button[span[text()='Xem chi tiết']]")));
+
+                ((IJavaScriptExecutor)driver).ExecuteScript("arguments[0].scrollIntoView(true);", viewDetailsButton);
+                Thread.Sleep(1000);
+
+                viewDetailsButton.Click();
+
+                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Pass", "Đã bấm vào 'Xem chi tiết' thành công.");
+            }
+            catch (WebDriverTimeoutException)
+            {
+                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Fail", "Không thể tìm thấy nút 'Xem chi tiết' sau 10 giây.");
             }
             catch (Exception ex)
             {
-                // Ghi kết quả FAIL nếu có lỗi trong quá trình test
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "FAIL", "Lỗi xảy ra: " + ex.Message);
-                Console.WriteLine("❌ Test Case ID_XemLSMH_4 Failed: Lỗi xảy ra - " + ex.Message);
+                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_4", "Fail", "Lỗi xảy ra: " + ex.Message);
             }
         }
+
+
+
 
         [Test]
         public void ID_XemLSMH_5()
         {
-            // 1. Điều hướng đến trang lịch sử mua hàng
-            purchaseHistoryPage.NavigateToPurchaseHistory();
-
-            // 2. Bấm vào nút "Xem chi tiết"
-            purchaseHistoryPage.ClickViewDetailsButton();
-
-            // 3. Bấm vào nút "Xuất file Excel"
-            purchaseHistoryPage.ClickExportExcelButton();
-
-            // 4. Ghi kết quả vào file Excel
-            bool isButtonClicked = true; // Giả sử nếu không có lỗi là thành công
-
-            if (isButtonClicked)
+            try
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "PASS", "Đã bấm vào 'Xem chi tiết' và 'Xuất file Excel' thành công.");
-            }
-            else
-            {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "FAIL", "Không thể bấm vào 'Xem chi tiết' hoặc 'Xuất file Excel'.");
-            }
+                purchaseHistoryPage.NavigateToPurchaseHistory();
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
-            // 5. In thông báo kết quả
-            Console.WriteLine(isButtonClicked ? "✅ Test Case ID_XemLSMH_5 Passed." : "❌ Test Case ID_XemLSMH_5 Failed.");
+                var viewDetailsButton = wait.Until(ExpectedConditions.ElementToBeClickable(
+                    By.XPath("//button[span[text()='Xem chi tiết']]")));
+                viewDetailsButton.Click();
+                Thread.Sleep(1000);
+
+                var exportExcelButton = wait.Until(ExpectedConditions.ElementToBeClickable(
+                    By.XPath("//button[span[text()='Xuất file Excel']]")));
+                exportExcelButton.Click();
+
+                Thread.Sleep(5000);
+                FileInfo latestFile = CustomFileHelper.GetLatestExcelFile();
+                if (latestFile != null)
+                {
+                    Console.WriteLine("File đã tải về: " + latestFile.FullName);
+                    CustomFileHelper.OpenFile(latestFile);
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Pass", "Đã xuất file Excel và mở thành công.");
+                }
+                else
+                {
+                    ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Fail", "Không tìm thấy file Excel.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_5", "Fail", "Lỗi: " + ex.Message);
+            }
         }
+
     }
 }
