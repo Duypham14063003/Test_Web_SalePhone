@@ -3,6 +3,7 @@ using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using System;
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Text.RegularExpressions;
 using test_salephone.Utilities;
 
@@ -24,6 +25,18 @@ namespace test_salephone.PageObjects
         private readonly By giaSanPhamLocator = By.XPath("//div[@class='ant-card-body']//p[2]");
         private readonly By soLuongLocator = By.XPath("//div[@class='ant-card-body']//p[3]");
         private readonly By tongTienLocator = By.XPath("//span[@class='ant-typography order-total css-qnu6hi']");
+
+
+        //-----------------------lấy ra thông tin đơn hàng 
+        //------------------------đếm đơn hàng 
+        //--------------------------hủy đơn hàng 
+        //-----------------------kt nút hủy đơn hàng có bị vô hiệu ohas không 
+        //----------------------Xem chi tiets đơn 
+        //-------------------click nút xuất excel 
+        //-------------chi tiết đơn hàng 
+        //------------------hùy đơn hàng có trạng thái hủy được 
+        //------------xác nhận hủy đơn 
+        //----------trạng thái đơn 
 
 
         public PurchaseHistoryPage(IWebDriver driver)
@@ -51,6 +64,7 @@ namespace test_salephone.PageObjects
             }
         }
 
+        //-----------------------lấy ra thông tin đơn hàng 
         public string GetOrderDetailsOfFirstItem()
         {
             try
@@ -86,7 +100,7 @@ namespace test_salephone.PageObjects
                 Console.WriteLine($"Đã tìm thấy Tổng tiền: {tongTien}");
 
                 return $"Ngày đặt hàng: {ngayDatHang}\n" +
-                       $"    {tenSanPham}\n" +
+                       $"Tên sản phẩm:    {tenSanPham}\n" +
                        $"Giá sản phẩm: {giaSanPham}\n" +
                        $"Số lượng: {soLuong}\n" +
                        $"Tổng tiền: {tongTien}";
@@ -99,20 +113,21 @@ namespace test_salephone.PageObjects
             }
         }
 
+        //------------------------đếm đơn hàng 
         public int GetOrderCount()
         {
-            return driver.FindElements(By.XPath("//div[@class='order-item']")).Count; // Thay thế XPath bằng locator phù hợp
+            return driver.FindElements(By.XPath("//div[@class='order-item']")).Count;
         }
-        
 
+        //--------------------------hủy đơn hàng 
         public void CancelFirstOrder()
         {
             ReadOnlyCollection<IWebElement> huyDonHangButtons = driver.FindElements(By.XPath("//button[span[text()='Hủy đơn hàng']]"));
 
             if (huyDonHangButtons.Count == 0)
             {
-                ExcelReportHelper.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "WARNING", "Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
-                Console.WriteLine("⚠️ Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
+                ExcelReportHelper_Trân.WriteToExcel("Testcase Trân", "ID_XemLSMH_2", "WARNING", "Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
+                Console.WriteLine("Không tìm thấy đơn hàng có nút 'Hủy đơn hàng'.");
                 return;
             }
 
@@ -127,15 +142,17 @@ namespace test_salephone.PageObjects
             }
             catch (WebDriverTimeoutException)
             {
-                Console.WriteLine("⚠️ Không tìm thấy popup xác nhận hủy đơn hàng hoặc đã bấm ok không thành công.");
+                Console.WriteLine("Không tìm thấy popup xác nhận hủy đơn hàng hoặc đã bấm ok không thành công.");
             }
         }
+
         public string GetOrderStatus(IWebElement orderItem)
         {
-            // Logic để lấy trạng thái đơn hàng (ví dụ)
+            // Logic để lấy trạng thái đơn hàng
             return orderItem.FindElement(By.XPath(".//span[@class='order-status']")).Text;
         }
 
+        //-----------------------kt nút hủy đơn hàng có bị vô hiệu ohas không 
         public bool IsCancelButtonEnabled(IWebElement orderItem)
         {
             try
@@ -145,24 +162,28 @@ namespace test_salephone.PageObjects
             }
             catch (NoSuchElementException)
             {
-                return false; // Nút không tồn tại, tức là không hoạt động
+                return false;
             }
         }
+
+
+        //----------------------Xem chi tiets đơn 
         public bool ClickViewDetailsButton()
         {
             try
             {
                 var viewDetailsButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[span[text()='Xem chi tiết']]")));
                 viewDetailsButton.Click();
-                return true; // ✅ Click thành công
+                return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("❌ Không thể bấm vào nút 'Xem chi tiết': " + ex.Message);
-                return false; // ❌ Click thất bại
+                Console.WriteLine("Không thể bấm vào nút 'Xem chi tiết': " + ex.Message);
+                return false;
             }
         }
 
+        //-------------------click nút xuất excel 
         public void ClickExportExcelButton()
         {
             var exportButton = wait.Until(ExpectedConditions.ElementToBeClickable(
@@ -170,6 +191,8 @@ namespace test_salephone.PageObjects
             exportButton.Click();
         }
 
+
+        //-------------chi tiết đơn hàng 
         public string GetOrderDetails()
         {
             try
@@ -231,54 +254,197 @@ namespace test_salephone.PageObjects
                 return null;
             }
         }
+
+
+
+
+
+
+        //------------------hùy đơn hàng có trạng thái hủy được 
+        public bool FindCancelableOrder()
+        {
+            try
+            {
+                var orderElements = driver.FindElements(By.XPath("//div[contains(@class, 'order-item')]"));
+                foreach (var order in orderElements)
+                {
+                    var statusElement = order.FindElement(By.XPath(".//span[contains(@class, 'order-status')]"));
+                    string status = statusElement.Text.Trim();
+
+                    if (status == "Đang xử lý" || status == "Đang giao hàng")
+                    {
+                        Console.WriteLine($"Tìm thấy đơn hàng có thể hủy với trạng thái: {status}");
+
+                        // Nhấn vào nút "Hủy đơn hàng" của đơn hàng này
+                        var cancelButton = order.FindElement(By.XPath(".//button[contains(text(), 'Hủy đơn hàng')]"));
+                        cancelButton.Click();
+                        return true;
+                    }
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                Console.WriteLine("Không tìm thấy đơn hàng nào có thể hủy.");
+            }
+            return false;
+        }
+        public void ClickCancelOrderButton()
+        {
+            var cancelButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[contains(text(), 'Hủy đơn hàng')]")));
+            cancelButton.Click();
+        }
+
+        //------------xác nhận hủy đơn 
+        public void ConfirmCancelOrder()
+        {
+            var confirmButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[contains(text(), 'Xác nhận')]")));
+            confirmButton.Click();
+        }
+
+        //----------trạng thái đơn 
+        public string GetOrderStatus()
+        {
+            var statusElement = wait.Until(ExpectedConditions.ElementIsVisible(By.XPath("//span[contains(@class, 'order-status')]")));
+            return statusElement.Text.Trim();
+        }
+
+        public bool IsCancelOrderButtonVisible()
+        {
+            try
+            {
+                var cancelButton = driver.FindElement(By.XPath("//button[contains(text(), 'Hủy đơn hàng')]"));
+                return cancelButton.Displayed;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
+        public bool IsCancelOrderButtonClickable()
+        {
+            try
+            {
+                var cancelButton = driver.FindElement(By.XPath("//button[contains(text(), 'Hủy đơn hàng')]"));
+                return cancelButton.Enabled;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
+        }
+
+        public IWebElement FindDeliveredOrder()
+        {
+            try
+            {
+                Console.WriteLine("Đang tìm đơn hàng có trạng thái 'Đã giao hàng thành công'...");
+
+                // Xác định tất cả các đơn hàng trong trang lịch sử
+                var orders = driver.FindElements(By.CssSelector("div[data-show='true'].ant-alert-success"));
+
+                foreach (var order in orders)
+                {
+                    if (order.Text.Contains("Đã giao hàng thành công"))
+                    {
+                        Console.WriteLine("Đã tìm thấy đơn hàng đã giao thành công.");
+                        return order;
+                    }
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                Console.WriteLine("Không tìm thấy đơn hàng đã giao thành công.");
+            }
+
+            return null;
+        }
+        public bool CancelProcessingOrder(string orderDate, StringBuilder logOutput)
+        {
+            try
+            {
+                logOutput.AppendLine($"Tìm đơn hàng có ngày đặt: {orderDate}...");
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+
+                // Tìm đơn hàng có ngày đặt hàng cụ thể
+                var orderElement = wait.Until(ExpectedConditions.ElementExists(By.XPath($"//span[contains(text(), '{orderDate}')]/ancestor::div[contains(@class, 'order-container')]")));
+
+                if (orderElement != null)
+                {
+                    logOutput.AppendLine("Tìm thấy đơn hàng. Kiểm tra trạng thái...");
+
+                    // Kiểm tra trạng thái "Đang xử lý"
+                    var statusElement = orderElement.FindElement(By.XPath(".//div[contains(@class, 'ant-alert-info') and .//div[text()='Đang xử lý']"));
+
+                    if (statusElement != null)
+                    {
+                        logOutput.AppendLine("Đơn hàng đang ở trạng thái 'Đang xử lý'. Tiến hành hủy...");
+
+                        // Tìm nút "Hủy đơn hàng"
+                        var cancelButton = orderElement.FindElement(By.XPath(".//button[span[text()='Hủy đơn hàng']]"));
+
+                        if (cancelButton.Displayed && cancelButton.Enabled)
+                        {
+                            logOutput.AppendLine("Click vào nút 'Hủy đơn hàng'...");
+                            cancelButton.Click();
+                            Thread.Sleep(3000);
+
+                            // Xác nhận hủy đơn hàng
+                            var confirmButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//button[span[text()='OK']]")));
+                            confirmButton.Click();
+                            Thread.Sleep(5000);
+
+                            // Kiểm tra lại xem đơn hàng có còn tồn tại không
+                            driver.Navigate().Refresh();
+                            Thread.Sleep(5000);
+
+                            try
+                            {
+                                wait.Until(ExpectedConditions.ElementExists(By.XPath($"//span[contains(text(), '{orderDate}')]")));
+                                logOutput.AppendLine("Đơn hàng vẫn tồn tại. Hủy đơn thất bại!");
+                                return false;
+                            }
+                            catch (WebDriverTimeoutException)
+                            {
+                                logOutput.AppendLine("Đơn hàng đã bị xóa khỏi danh sách. Hủy thành công!");
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            logOutput.AppendLine("Nút 'Hủy đơn hàng' không khả dụng!");
+                        }
+                    }
+                    else
+                    {
+                        logOutput.AppendLine("Đơn hàng không ở trạng thái 'Đang xử lý'.");
+                    }
+                }
+                else
+                {
+                    logOutput.AppendLine("Không tìm thấy đơn hàng với ngày đặt hàng cụ thể.");
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                logOutput.AppendLine("Không tìm thấy đơn hàng hoặc nút hủy.");
+            }
+
+            return false;
+        }
+
+
+        public IWebElement GetCancelButton(IWebElement orderItem)
+        {
+            try
+            {
+                return orderItem.FindElement(By.XPath(".//button[contains(text(), 'Hủy đơn hàng')]"));
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        }
+
     }
-
 }
-
-    //public bool VerifyOrderDetails(string orderDetails)
-    //{
-    //    // Thông tin mong đợi (Expected Result) từ file Excel
-    //    string expectedProductName = "SP Test";
-    //    string expectedPriceString = "10.999 VND";
-
-    //    // Loại bỏ " VND" và dấu phân cách hàng nghìn
-    //    string priceString = expectedPriceString.Replace(" VND", "").Replace(".", "");
-
-    //    // Chuyển đổi chuỗi thành decimal
-    //    if (decimal.TryParse(priceString, out decimal expectedPrice))
-    //    {
-    //        // Chuyển đổi thành công, expectedPrice chứa giá trị decimal
-    //        Console.WriteLine($"Giá trị decimal: {expectedPrice}");
-    //    }
-    //    else
-    //    {
-    //        // Chuyển đổi thất bại, xử lý lỗi
-    //        Console.WriteLine("Lỗi: Không thể chuyển đổi chuỗi thành decimal.");
-    //        return false; // Trả về false nếu chuyển đổi thất bại
-    //    }
-
-    //    int expectedQuantity = 1;
-
-    //    // Regular Expressions để trích xuất thông tin
-    //    string productNamePattern = @"Tên sản phẩm:\s*(.*?)\s*"; // Sửa regex để không dùng dấu nháy kép
-    //    string pricePattern = @"Giá sản phẩm:\s*([\d.]+)\s*"; // Sửa regex để trích xuất cả dấu chấm
-    //    string quantityPattern = @"Số lượng:\s*(\d+)\s*"; // Sửa regex để không dùng dấu nháy kép
-
-    //    // Trích xuất thông tin
-    //    string actualProductName = Regex.Match(orderDetails, productNamePattern).Groups[1].Value.Trim();
-    //    string priceStringFromOrder = Regex.Match(orderDetails, pricePattern).Groups[1].Value.Trim(); // Đổi tên biến tránh trùng lặp
-    //    string quantityString = Regex.Match(orderDetails, quantityPattern).Groups[1].Value.Trim();
-
-    //    // Kiểm tra và so sánh
-    //    bool isProductNameCorrect = string.Equals(expectedProductName, actualProductName, StringComparison.Ordinal);
-    //    decimal actualPrice;
-    //    bool isPriceCorrect = decimal.TryParse(priceStringFromOrder.Replace(".", ""), out actualPrice) && actualPrice == expectedPrice; // loại bỏ dấu chấm để so sánh
-    //    int actualQuantity;
-    //    bool isQuantityCorrect = int.TryParse(quantityString, out actualQuantity) && actualQuantity == expectedQuantity;
-
-    //    // Trả về kết quả
-    //    return isProductNameCorrect && isPriceCorrect && isQuantityCorrect;
-    //}
-
-
-    
